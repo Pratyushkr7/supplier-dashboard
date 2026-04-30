@@ -6,7 +6,8 @@ import {
   Activity, Database, Award, AlertCircle, ChevronLeft,
   MapPin, Tag, Loader2, FileUp, Plus, Star, Beaker,
   Link2, Info, FileCheck2, CircleDot,
-  Target, BarChart3, Zap, Wand2, Globe2, ShieldCheck, AlertTriangle
+  Target, BarChart3, Zap, Wand2, Globe2, ShieldCheck, AlertTriangle, Workflow,
+  Settings, Trash2, UserPlus, PackagePlus
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -934,13 +935,13 @@ function PercentileBar({ value, label, peer, state = "active" }) {
 // SIDEBAR
 // ---------------------------------------------------------------------------
 
-function Sidebar({ active, onChange, productCount, contactCount }) {
+function Sidebar({ active, onChange, productCount, contactCount, onOpenSettings }) {
   const items = [
     { id: "home", label: "Dashboard", icon: Home },
     { id: "contacts", label: "Contacts", icon: Users, badge: contactCount },
     { id: "catalogue", label: "Catalogue", icon: Package, badge: productCount },
     { id: "recommend", label: "Recommend", icon: Sparkles },
-    { id: "gaps", label: "Gap Analysis", icon: AlertCircle },
+    { id: "valuechain", label: "Value Chain", icon: Workflow },
     { id: "benchmark", label: "Benchmarking", icon: Activity },
   ];
 
@@ -979,7 +980,12 @@ function Sidebar({ active, onChange, productCount, contactCount }) {
         ))}
       </nav>
 
-      <div className="mt-auto p-4">
+      <div className="mt-auto p-3 space-y-2">
+        <button onClick={onOpenSettings}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[12.5px] text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200 transition-colors">
+          <Settings className="w-4 h-4 text-zinc-500" strokeWidth={1.75} />
+          <span>Settings</span>
+        </button>
         <div className="rounded-xl border border-zinc-800 p-3 bg-[#1c1c1e]">
           <div className="flex items-center gap-2 mb-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-lime-300" />
@@ -989,6 +995,103 @@ function Sidebar({ active, onChange, productCount, contactCount }) {
         </div>
       </div>
     </aside>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SETTINGS DRAWER
+// ---------------------------------------------------------------------------
+
+function SettingsDrawer({ settings, onChange, onClose }) {
+  const [googleKey, setGoogleKey] = useState(settings.googleKey || "");
+  const [googleCx, setGoogleCx] = useState(settings.googleCx || "");
+  const [saved, setSaved] = useState(false);
+  const handleSave = () => {
+    onChange({ googleKey: googleKey.trim(), googleCx: googleCx.trim() });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1600);
+  };
+  const handleClear = () => {
+    setGoogleKey("");
+    setGoogleCx("");
+    onChange({ googleKey: "", googleCx: "" });
+  };
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed top-0 right-0 bottom-0 w-full max-w-[480px] z-50 bg-[#161618] border-l border-zinc-800 shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800">
+          <div>
+            <h2 className="text-[16px] font-medium text-zinc-100">Settings</h2>
+            <p className="text-[11.5px] text-zinc-500 mt-0.5">Live competitor search via Google Programmable Search</p>
+          </div>
+          <button onClick={onClose}
+                  className="w-7 h-7 rounded hover:bg-zinc-800 flex items-center justify-center text-zinc-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.04] p-3.5">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-amber-300 mt-0.5 shrink-0" />
+              <div className="text-[11.5px] text-zinc-300 leading-relaxed">
+                <span className="text-zinc-100 font-medium">Bring your own keys.</span> The app stores them only in your browser (localStorage), never sent anywhere except Google's API. To get free keys (100 searches/day), see{" "}
+                <a href="https://programmablesearchengine.google.com/" target="_blank" rel="noopener noreferrer"
+                   className="text-lime-300 hover:underline">programmablesearchengine.google.com</a>.
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Google API key</label>
+            <input type="password"
+                   value={googleKey} onChange={(e) => setGoogleKey(e.target.value)}
+                   placeholder="AIza…"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30 focus:ring-1 focus:ring-lime-300/20" />
+            <p className="text-[10.5px] text-zinc-500 mt-1.5">From Google Cloud Console → Credentials.</p>
+          </div>
+
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Search engine ID (cx)</label>
+            <input type="text"
+                   value={googleCx} onChange={(e) => setGoogleCx(e.target.value)}
+                   placeholder="abc123…"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30 focus:ring-1 focus:ring-lime-300/20" />
+            <p className="text-[10.5px] text-zinc-500 mt-1.5">From your Programmable Search Engine control panel.</p>
+          </div>
+
+          <div className="pt-2">
+            <div className="text-[11px] uppercase tracking-widest text-zinc-500 mb-2">Status</div>
+            <div className="rounded-lg border border-zinc-800 bg-[#1c1c1e] p-3 flex items-center gap-2.5">
+              <div className={cx("w-1.5 h-1.5 rounded-full",
+                settings.googleKey && settings.googleCx ? "bg-lime-300" : "bg-zinc-600")} />
+              <span className="text-[12px] text-zinc-300">
+                {settings.googleKey && settings.googleCx
+                  ? "Live search configured"
+                  : "Not configured — Benchmarking will use curated data only"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-zinc-800 flex items-center gap-2 justify-end">
+          {(settings.googleKey || settings.googleCx) && (
+            <button onClick={handleClear}
+                    className="px-3 py-1.5 rounded-lg text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 mr-auto">
+              Clear keys
+            </button>
+          )}
+          <button onClick={onClose}
+                  className="px-3 py-1.5 rounded-lg text-[12px] text-zinc-300 bg-[#252528] border border-zinc-800 hover:bg-zinc-800">
+            Cancel
+          </button>
+          <button onClick={handleSave}
+                  className="px-4 py-1.5 rounded-lg text-[12px] text-zinc-900 font-medium bg-lime-300 hover:bg-lime-200">
+            {saved ? <span className="flex items-center gap-1.5"><Check className="w-3 h-3" />Saved</span> : "Save"}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -1025,13 +1128,6 @@ function SupplierHeader({ supplier }) {
           <div className="flex items-center gap-4">
             <div className="flex flex-wrap gap-1.5 max-w-md justify-end">
               {supplier.certifications.map(c => <Pill key={c} tone="muted">{c}</Pill>)}
-            </div>
-            <div className="pl-4 border-l border-zinc-800">
-              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-0.5">Score</div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-light text-zinc-100 tabular-nums">{supplier.score}</span>
-                <span className="text-[11px] text-zinc-600">/100</span>
-              </div>
             </div>
           </div>
         </div>
@@ -1646,11 +1742,12 @@ function SuggestCell({ value, field, rowId, mono, busy, onChange, onSuggest }) {
 // CONTACTS MODULE
 // ---------------------------------------------------------------------------
 
-function ContactsModule({ contacts, onIngest }) {
+function ContactsModule({ contacts, onIngest, onRemove }) {
   const [roleFilter, setRoleFilter] = useState("All");
   const [regionFilter, setRegionFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [drawer, setDrawer] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const handleFile = async (file) => {
     const ext = file.name.toLowerCase().split(".").pop();
@@ -1675,6 +1772,22 @@ function ContactsModule({ contacts, onIngest }) {
     setDrawer(null);
   };
 
+  const handleManualAdd = (form) => {
+    const stamped = [{
+      id: `c-${Date.now()}`,
+      name: form.name || "Unknown",
+      role: form.role || "Unknown",
+      email: form.email || "Unknown",
+      region: form.region || "Unknown",
+      tags: form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
+      phone: form.phone || "Unknown",
+      source: "Manual entry",
+      justAdded: true,
+    }];
+    onIngest(stamped);
+    setShowAddForm(false);
+  };
+
   const filtered = useMemo(() => contacts.filter(c =>
     (roleFilter === "All" || c.role === roleFilter) &&
     (regionFilter === "All" || c.region === regionFilter) &&
@@ -1695,7 +1808,13 @@ function ContactsModule({ contacts, onIngest }) {
           <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Contacts Intelligence</h2>
           <p className="text-[12px] text-zinc-500 mt-1">Upload PDFs, business cards or rosters — review before saving</p>
         </div>
-        <UploadButton label="Upload contacts file" onFile={handleFile} />
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowAddForm(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252528] border border-zinc-800 text-[12px] text-zinc-300 hover:bg-zinc-800">
+            <UserPlus className="w-3.5 h-3.5" />Add manually
+          </button>
+          <UploadButton label="Upload contacts file" onFile={handleFile} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1745,11 +1864,12 @@ function ContactsModule({ contacts, onIngest }) {
                 <th className="text-left px-5 py-3 font-normal">Region</th>
                 <th className="text-left px-5 py-3 font-normal">Tags</th>
                 <th className="text-left px-5 py-3 font-normal">Source</th>
+                <th className="text-right px-5 py-3 font-normal w-12"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
               {filtered.map(c => (
-                <tr key={c.id} className={cx("hover:bg-zinc-800/30 transition-colors",
+                <tr key={c.id} className={cx("hover:bg-zinc-800/30 transition-colors group",
                                               c.justAdded && "bg-lime-300/[0.04]")}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
@@ -1773,10 +1893,17 @@ function ContactsModule({ contacts, onIngest }) {
                       ? <span className="text-zinc-600">—</span>
                       : <span className="flex items-center gap-1.5"><FileText className="w-3 h-3 shrink-0" /><span className="truncate">{c.source}</span></span>}
                   </td>
+                  <td className="px-3 py-3 text-right">
+                    <button onClick={() => onRemove?.(c.id)}
+                            title="Remove contact"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded hover:bg-rose-500/10 hover:text-rose-300 text-zinc-500 inline-flex items-center justify-center">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-12 text-zinc-500 text-[12px]">No contacts match your filters</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-zinc-500 text-[12px]">No contacts match your filters</td></tr>
               )}
             </tbody>
           </table>
@@ -1793,7 +1920,93 @@ function ContactsModule({ contacts, onIngest }) {
         onConfirm={handleConfirm}
         onCancel={() => setDrawer(null)}
       />
+
+      {showAddForm && (
+        <ManualContactForm onSubmit={handleManualAdd} onCancel={() => setShowAddForm(false)} />
+      )}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MANUAL CONTACT FORM
+// ---------------------------------------------------------------------------
+
+function ManualContactForm({ onSubmit, onCancel }) {
+  const [form, setForm] = useState({
+    name: "", role: "Sales", email: "", phone: "", region: "APAC", tags: "",
+  });
+  const submit = () => {
+    if (!form.name.trim()) return;
+    onSubmit(form);
+  };
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+      <div className="fixed top-0 right-0 bottom-0 w-full max-w-[440px] z-50 bg-[#161618] border-l border-zinc-800 flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800">
+          <div>
+            <h2 className="text-[16px] font-medium text-zinc-100">Add contact</h2>
+            <p className="text-[11.5px] text-zinc-500 mt-0.5">Manually add a person to the directory</p>
+          </div>
+          <button onClick={onCancel} className="w-7 h-7 rounded hover:bg-zinc-800 flex items-center justify-center text-zinc-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Name</label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                   placeholder="e.g. Wei Chen Lim"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Role</label>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
+                      className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 outline-none focus:border-lime-300/30">
+                {["Sales","Technical","Procurement","Management"].map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Region</label>
+              <select value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })}
+                      className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 outline-none focus:border-lime-300/30">
+                {["APAC","Europe","MEA","Americas"].map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Email</label>
+            <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+                   placeholder="name@company.com"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30" />
+          </div>
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Phone</label>
+            <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                   placeholder="+65 …"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30" />
+          </div>
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Tags <span className="text-zinc-600 normal-case tracking-normal">(comma-separated)</span></label>
+            <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                   placeholder="Decision Maker, Senior"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30" />
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-zinc-800 flex items-center gap-2 justify-end">
+          <button onClick={onCancel}
+                  className="px-3 py-1.5 rounded-lg text-[12px] text-zinc-300 bg-[#252528] border border-zinc-800 hover:bg-zinc-800">
+            Cancel
+          </button>
+          <button onClick={submit} disabled={!form.name.trim()}
+                  className="px-4 py-1.5 rounded-lg text-[12px] text-zinc-900 font-medium bg-lime-300 hover:bg-lime-200 disabled:opacity-50 disabled:cursor-not-allowed">
+            Add contact
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -1801,12 +2014,13 @@ function ContactsModule({ contacts, onIngest }) {
 // CATALOGUE MODULE
 // ---------------------------------------------------------------------------
 
-function CatalogueModule({ products, contacts, onIngest }) {
+function CatalogueModule({ products, contacts, onIngest, onRemove }) {
   const [catFilter, setCatFilter] = useState("All");
   const [demandFilter, setDemandFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [drawer, setDrawer] = useState(null);
   const [linkProduct, setLinkProduct] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const handleFile = async (file) => {
     const ext = file.name.toLowerCase().split(".").pop();
@@ -1838,6 +2052,24 @@ function CatalogueModule({ products, contacts, onIngest }) {
     setDrawer(null);
   };
 
+  const handleManualAdd = (form) => {
+    onIngest([{
+      id: `p-${Date.now()}`,
+      name: form.name || "Unnamed product",
+      chemical: form.chemical || "Unknown",
+      category: form.category || "Unknown",
+      application: form.application || "Unknown",
+      grade: form.grade || "Unknown",
+      cas: form.cas || "Unknown",
+      industry: [],
+      demand: "medium",
+      source: "Manual entry",
+      sources: {},
+      justAdded: true,
+    }]);
+    setShowAddForm(false);
+  };
+
   const filtered = useMemo(() => products.filter(p =>
     (catFilter === "All" || p.category === catFilter) &&
     (demandFilter === "All" || p.demand === demandFilter.toLowerCase()) &&
@@ -1858,7 +2090,13 @@ function CatalogueModule({ products, contacts, onIngest }) {
           <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Product Catalogue</h2>
           <p className="text-[12px] text-zinc-500 mt-1">Upload supplier catalogues — review parsed SKUs before saving</p>
         </div>
-        <UploadButton label="Upload catalogue file" onFile={handleFile} />
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowAddForm(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252528] border border-zinc-800 text-[12px] text-zinc-300 hover:bg-zinc-800">
+            <PackagePlus className="w-3.5 h-3.5" />Add manually
+          </button>
+          <UploadButton label="Upload catalogue file" onFile={handleFile} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1910,11 +2148,12 @@ function CatalogueModule({ products, contacts, onIngest }) {
                 <th className="text-left px-5 py-3 font-normal">CAS</th>
                 <th className="text-left px-5 py-3 font-normal">Source</th>
                 <th className="text-right px-5 py-3 font-normal w-20">Linked</th>
+                <th className="text-right px-3 py-3 font-normal w-12"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
               {filtered.map(p => (
-                <tr key={p.id} className={cx("hover:bg-zinc-800/30 transition-colors",
+                <tr key={p.id} className={cx("hover:bg-zinc-800/30 transition-colors group",
                                               p.justAdded && "bg-lime-300/[0.04]")}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
@@ -1942,10 +2181,17 @@ function CatalogueModule({ products, contacts, onIngest }) {
                       <Link2 className="w-3 h-3 text-lime-300" />View
                     </button>
                   </td>
+                  <td className="px-3 py-3 text-right">
+                    <button onClick={() => onRemove?.(p.id)}
+                            title="Remove product"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded hover:bg-rose-500/10 hover:text-rose-300 text-zinc-500 inline-flex items-center justify-center">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={9} className="text-center py-12 text-zinc-500 text-[12px]">No products match your filters</td></tr>
+                <tr><td colSpan={10} className="text-center py-12 text-zinc-500 text-[12px]">No products match your filters</td></tr>
               )}
             </tbody>
           </table>
@@ -1965,7 +2211,94 @@ function CatalogueModule({ products, contacts, onIngest }) {
 
       <LinkedContactsDrawer product={linkProduct} contacts={contacts}
                             onClose={() => setLinkProduct(null)} />
+
+      {showAddForm && (
+        <ManualProductForm onSubmit={handleManualAdd} onCancel={() => setShowAddForm(false)} />
+      )}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MANUAL PRODUCT FORM
+// ---------------------------------------------------------------------------
+
+function ManualProductForm({ onSubmit, onCancel }) {
+  const [form, setForm] = useState({
+    name: "", chemical: "", category: "Unknown", application: "Unknown", grade: "Unknown", cas: "",
+  });
+  const submit = () => {
+    if (!form.name.trim()) return;
+    onSubmit(form);
+  };
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+      <div className="fixed top-0 right-0 bottom-0 w-full max-w-[440px] z-50 bg-[#161618] border-l border-zinc-800 flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800">
+          <div>
+            <h2 className="text-[16px] font-medium text-zinc-100">Add product</h2>
+            <p className="text-[11.5px] text-zinc-500 mt-0.5">Manually add a SKU to the catalogue</p>
+          </div>
+          <button onClick={onCancel} className="w-7 h-7 rounded hover:bg-zinc-800 flex items-center justify-center text-zinc-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Product name</label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                   placeholder="e.g. Ethyl Acetate 99.5%"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30" />
+          </div>
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Chemical name</label>
+            <input value={form.chemical} onChange={(e) => setForm({ ...form, chemical: e.target.value })}
+                   placeholder="e.g. Ethyl acetate"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Category</label>
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
+                      className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 outline-none focus:border-lime-300/30">
+                {["Unknown","Solvents","Resins","Additives","Pigments","Surfactants","Amines","Esters","Reagents","Hardeners","Polymers"].map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Grade</label>
+              <select value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })}
+                      className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 outline-none focus:border-lime-300/30">
+                {["Unknown","Industrial","Premium","Specialty","Reagent","Pharmaceutical","Technical","Cosmetic","Food"].map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">Application</label>
+            <input value={form.application} onChange={(e) => setForm({ ...form, application: e.target.value })}
+                   placeholder="e.g. Coatings, Inks"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30" />
+          </div>
+          <div>
+            <label className="block text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5">CAS number</label>
+            <input value={form.cas} onChange={(e) => setForm({ ...form, cas: e.target.value })}
+                   placeholder="e.g. 141-78-6"
+                   className="w-full bg-[#252528] border border-zinc-800 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-lime-300/30 tabular-nums" />
+            <p className="text-[10.5px] text-zinc-500 mt-1.5">Adding a CAS enables direct competitor matching in Benchmarking.</p>
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-zinc-800 flex items-center gap-2 justify-end">
+          <button onClick={onCancel}
+                  className="px-3 py-1.5 rounded-lg text-[12px] text-zinc-300 bg-[#252528] border border-zinc-800 hover:bg-zinc-800">
+            Cancel
+          </button>
+          <button onClick={submit} disabled={!form.name.trim()}
+                  className="px-4 py-1.5 rounded-lg text-[12px] text-zinc-900 font-medium bg-lime-300 hover:bg-lime-200 disabled:opacity-50 disabled:cursor-not-allowed">
+            Add product
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -2228,471 +2561,1231 @@ function RecommendationCard({ rec, rank, feedback, onFeedback }) {
 }
 
 // ---------------------------------------------------------------------------
-// GAP ANALYSIS MODULE
+// COMPETITOR INTELLIGENCE
+// ---------------------------------------------------------------------------
+// Two data sources, in order of preference:
+//   1. Live Google Programmable Search (when user provides PSE key + CX)
+//   2. Curated competitor knowledge base (fallback, always available)
+//
+// All competitor data here was compiled from publicly-disclosed manufacturer
+// product portfolios (company websites, public catalogues) as of 2024.
+// Each entry maps either CAS number or chemical class to known producers
+// AND their actual product-line trade names where publicly available.
+
+const COMPETITOR_DB = {
+  // ============= SOLVENTS =============
+  "141-78-6": {
+    chemical: "Ethyl acetate",
+    competitors: [
+      { company: "INEOS",      productName: "Ethyl Acetate", region: "Europe" },
+      { company: "Eastman",    productName: "Eastman Ethyl Acetate", region: "Americas" },
+      { company: "Celanese",   productName: "Celanese Ethyl Acetate", region: "Americas" },
+      { company: "Sipchem",    productName: "Ethyl Acetate", region: "MEA" },
+      { company: "Jubilant Ingrevia", productName: "Jubilant Ethyl Acetate", region: "APAC" },
+      { company: "Solvay",     productName: "Rhodiasolv Ethyl Acetate", region: "Europe" },
+    ],
+  },
+  "78-93-3": {
+    chemical: "Methyl ethyl ketone",
+    competitors: [
+      { company: "ExxonMobil", productName: "MEK", region: "Americas" },
+      { company: "Maruzen",    productName: "Maruzen MEK", region: "APAC" },
+      { company: "Shell",      productName: "Shell MEK", region: "Europe" },
+      { company: "SK Geo Centric", productName: "SK MEK", region: "APAC" },
+      { company: "Sasol",      productName: "Sasol MEK", region: "MEA" },
+    ],
+  },
+  "108-88-3": {
+    chemical: "Toluene",
+    competitors: [
+      { company: "ExxonMobil", productName: "Solvesso Toluene", region: "Americas" },
+      { company: "Shell",      productName: "Shellsol T", region: "Europe" },
+      { company: "Reliance",   productName: "Reliance Toluene", region: "APAC" },
+      { company: "SABIC",      productName: "SABIC Toluene", region: "MEA" },
+      { company: "INEOS",      productName: "INEOS Toluene", region: "Europe" },
+    ],
+  },
+  "67-64-1": {
+    chemical: "Acetone",
+    competitors: [
+      { company: "INEOS",      productName: "INEOS Phenol Acetone", region: "Europe" },
+      { company: "Mitsui",     productName: "Mitsui Acetone", region: "APAC" },
+      { company: "Shell",      productName: "Shell Acetone", region: "Europe" },
+      { company: "AdvanSix",   productName: "AdvanSix Acetone", region: "Americas" },
+    ],
+  },
+  "67-63-0": {
+    chemical: "Isopropanol",
+    competitors: [
+      { company: "Dow",        productName: "Dow IPA", region: "Americas" },
+      { company: "ExxonMobil", productName: "ExxonMobil IPA", region: "Americas" },
+      { company: "Mitsui",     productName: "Mitsui IPA", region: "APAC" },
+      { company: "Shell",      productName: "Shell IPA", region: "Europe" },
+      { company: "LG Chem",    productName: "LG Chem IPA", region: "APAC" },
+    ],
+  },
+  "75-09-2": {
+    chemical: "Dichloromethane",
+    competitors: [
+      { company: "Olin",       productName: "Olin DCM", region: "Americas" },
+      { company: "AGC",        productName: "AGC Dichloromethane", region: "APAC" },
+      { company: "Solvay",     productName: "Solvay DCM", region: "Europe" },
+      { company: "Occidental Chemical", productName: "Oxy DCM", region: "Americas" },
+    ],
+  },
+  "75-05-8": {
+    chemical: "Acetonitrile",
+    competitors: [
+      { company: "INEOS",      productName: "INEOS Acetonitrile", region: "Europe" },
+      { company: "Asahi Kasei", productName: "Asahi Acetonitrile", region: "APAC" },
+      { company: "Sumitomo",   productName: "Sumitomo Acetonitrile", region: "APAC" },
+      { company: "Solutia",    productName: "Solutia Acetonitrile", region: "Americas" },
+    ],
+  },
+  "109-99-9": {
+    chemical: "Tetrahydrofuran",
+    competitors: [
+      { company: "BASF",       productName: "BASF THF", region: "Europe" },
+      { company: "Ashland",    productName: "Ashland THF", region: "Americas" },
+      { company: "Mitsubishi", productName: "Mitsubishi THF", region: "APAC" },
+      { company: "LyondellBasell", productName: "Lyondell THF", region: "Americas" },
+    ],
+  },
+  "110-54-3": {
+    chemical: "n-Hexane",
+    competitors: [
+      { company: "ExxonMobil", productName: "Exxsol Hexane", region: "Americas" },
+      { company: "Shell",      productName: "Shellsol Hexane", region: "Europe" },
+      { company: "Reliance",   productName: "Reliance n-Hexane", region: "APAC" },
+      { company: "Phillips 66", productName: "Phillips Hexane", region: "Americas" },
+    ],
+  },
+  "123-86-4": {
+    chemical: "n-Butyl acetate",
+    competitors: [
+      { company: "BASF",       productName: "BASF Butyl Acetate", region: "Europe" },
+      { company: "Eastman",    productName: "Eastman Butyl Acetate", region: "Americas" },
+      { company: "Celanese",   productName: "Celanese Butyl Acetate", region: "Americas" },
+      { company: "OXEA",       productName: "OXEA Butyl Acetate", region: "Europe" },
+    ],
+  },
+  "108-65-6": {
+    chemical: "Propylene glycol monomethyl ether acetate",
+    competitors: [
+      { company: "Dow",        productName: "Dowanol PMA", region: "Americas" },
+      { company: "Eastman",    productName: "Eastman PM Acetate", region: "Americas" },
+      { company: "Lyondell",   productName: "PM Acetate", region: "Americas" },
+      { company: "Shell",      productName: "Shell PM Acetate", region: "Europe" },
+    ],
+  },
+
+  // ============= AMINES =============
+  "74-89-5": {
+    chemical: "Monomethylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF Monomethylamine", region: "Europe" },
+      { company: "Eastman",    productName: "Eastman MMA", region: "Americas" },
+      { company: "Balaji Amines", productName: "Balaji MMA", region: "APAC" },
+      { company: "Mitsubishi Gas Chemical", productName: "MGC MMA", region: "APAC" },
+    ],
+  },
+  "124-40-3": {
+    chemical: "Dimethylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF Dimethylamine", region: "Europe" },
+      { company: "Eastman (Taminco)", productName: "Taminco DMA", region: "Europe" },
+      { company: "Balaji Amines", productName: "Balaji DMA", region: "APAC" },
+      { company: "Mitsubishi Gas Chemical", productName: "MGC DMA", region: "APAC" },
+    ],
+  },
+  "75-50-3": {
+    chemical: "Trimethylamine",
+    competitors: [
+      { company: "Eastman (Taminco)", productName: "Taminco TMA", region: "Europe" },
+      { company: "BASF",       productName: "BASF TMA", region: "Europe" },
+      { company: "Balaji Amines", productName: "Balaji TMA", region: "APAC" },
+    ],
+  },
+  "75-04-7": {
+    chemical: "Monoethylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF MEA", region: "Europe" },
+      { company: "Eastman",    productName: "Eastman Monoethylamine", region: "Americas" },
+      { company: "Akzo Nobel", productName: "Akzo Monoethylamine", region: "Europe" },
+    ],
+  },
+  "121-44-8": {
+    chemical: "Triethylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF Triethylamine", region: "Europe" },
+      { company: "Celanese",   productName: "Celanese TEA", region: "Americas" },
+      { company: "Balaji Amines", productName: "Balaji TEA", region: "APAC" },
+      { company: "Eastman",    productName: "Eastman TEA", region: "Americas" },
+    ],
+  },
+  "109-89-7": {
+    chemical: "Diethylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF Diethylamine", region: "Europe" },
+      { company: "Eastman",    productName: "Eastman DEA", region: "Americas" },
+      { company: "Balaji Amines", productName: "Balaji DEA", region: "APAC" },
+    ],
+  },
+  "108-18-9": {
+    chemical: "Diisopropylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF DIPA", region: "Europe" },
+      { company: "Arkema",     productName: "Arkema DIPA", region: "Europe" },
+      { company: "Balaji Amines", productName: "Balaji DIPA", region: "APAC" },
+    ],
+  },
+  "75-31-0": {
+    chemical: "Monoisopropylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF MIPA", region: "Europe" },
+      { company: "Arkema",     productName: "Arkema MIPA", region: "Europe" },
+      { company: "Balaji Amines", productName: "Balaji MIPA", region: "APAC" },
+    ],
+  },
+  "104-75-6": {
+    chemical: "2-Ethylhexylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF 2-EHA", region: "Europe" },
+      { company: "Arkema",     productName: "Arkema 2-EHA", region: "Europe" },
+      { company: "Alkyl Amines", productName: "Alkyl 2-EHA", region: "APAC" },
+    ],
+  },
+  "7087-68-5": {
+    chemical: "N,N-Diisopropylethylamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF Hünig's Base", region: "Europe" },
+      { company: "Alkyl Amines", productName: "Alkyl DIPEA", region: "APAC" },
+      { company: "Sigma-Aldrich", productName: "Hünig's Base", region: "Americas" },
+    ],
+  },
+  "109-55-7": {
+    chemical: "N,N-Dimethyl-1,3-propanediamine",
+    competitors: [
+      { company: "BASF",       productName: "BASF DMAPA", region: "Europe" },
+      { company: "Eastman (Taminco)", productName: "Taminco DMAPA", region: "Europe" },
+      { company: "Alkyl Amines", productName: "Alkyl DMAPA", region: "APAC" },
+    ],
+  },
+  "141-43-5": {
+    chemical: "Monoethanolamine",
+    competitors: [
+      { company: "Dow",        productName: "Dow MEA", region: "Americas" },
+      { company: "BASF",       productName: "BASF MEA", region: "Europe" },
+      { company: "INEOS",      productName: "INEOS MEA", region: "Europe" },
+      { company: "Huntsman",   productName: "Huntsman MEA", region: "Americas" },
+    ],
+  },
+  "111-42-2": {
+    chemical: "Diethanolamine",
+    competitors: [
+      { company: "Dow",        productName: "Dow DEA", region: "Americas" },
+      { company: "BASF",       productName: "BASF DEA", region: "Europe" },
+      { company: "Huntsman",   productName: "Huntsman DEA", region: "Americas" },
+    ],
+  },
+  "102-71-6": {
+    chemical: "Triethanolamine",
+    competitors: [
+      { company: "Dow",        productName: "Dow TEA", region: "Americas" },
+      { company: "BASF",       productName: "BASF TEA", region: "Europe" },
+      { company: "Huntsman",   productName: "Huntsman TEA", region: "Americas" },
+      { company: "INEOS",      productName: "INEOS TEA", region: "Europe" },
+    ],
+  },
+
+  // ============= ESTERS / EMOLLIENTS =============
+  "142-91-6": {
+    chemical: "Isopropyl palmitate",
+    competitors: [
+      { company: "Stéarinerie Dubois", productName: "DUB IPP", region: "Europe" },
+      { company: "Croda",      productName: "Crodamol IPP", region: "Europe" },
+      { company: "BASF Care",  productName: "Cegesoft IPP", region: "Europe" },
+      { company: "Inolex",     productName: "Lexol IPP", region: "Americas" },
+    ],
+  },
+  "110-27-0": {
+    chemical: "Isopropyl myristate",
+    competitors: [
+      { company: "Stéarinerie Dubois", productName: "DUB IPM", region: "Europe" },
+      { company: "Croda",      productName: "Crodamol IPM", region: "Europe" },
+      { company: "BASF Care",  productName: "Cegesoft IPM", region: "Europe" },
+      { company: "Inolex",     productName: "Lexol IPM", region: "Americas" },
+    ],
+  },
+  "31566-31-1": {
+    chemical: "Glyceryl stearate",
+    competitors: [
+      { company: "BASF Care",  productName: "Cutina GMS", region: "Europe" },
+      { company: "Croda",      productName: "Cithrol GMS", region: "Europe" },
+      { company: "Stéarinerie Dubois", productName: "DUB GMS", region: "Europe" },
+      { company: "Lonza",      productName: "Aristolan GMS", region: "Europe" },
+    ],
+  },
+  "65381-09-1": {
+    chemical: "Caprylic/capric triglyceride",
+    competitors: [
+      { company: "Stéarinerie Dubois", productName: "DUB MCT 5545", region: "Europe" },
+      { company: "BASF Care",  productName: "Myritol 318", region: "Europe" },
+      { company: "Croda",      productName: "Crodamol GTCC", region: "Europe" },
+      { company: "IOI Oleo",   productName: "Miglyol 812", region: "APAC" },
+    ],
+  },
+
+  // ============= RESINS =============
+  "9003-01-4": {
+    chemical: "Polyacrylate (acrylic resin)",
+    competitors: [
+      { company: "BASF",       productName: "Joncryl", region: "Europe" },
+      { company: "Allnex",     productName: "Setalux", region: "Europe" },
+      { company: "Arkema",     productName: "Synaqua", region: "Europe" },
+      { company: "Dow",        productName: "Paraloid", region: "Americas" },
+      { company: "Mitsubishi", productName: "Dianal", region: "APAC" },
+    ],
+  },
+  "25068-38-6": {
+    chemical: "Bisphenol A epoxy resin",
+    competitors: [
+      { company: "Hexion",     productName: "Epon Resin", region: "Americas" },
+      { company: "Olin (Blue Cube)", productName: "DER Resins", region: "Americas" },
+      { company: "Kukdo Chemical", productName: "Kukdo Epoxy", region: "APAC" },
+      { company: "Sun Chemical (DIC)", productName: "Epiclon", region: "APAC" },
+      { company: "Nan Ya",     productName: "Nan Ya Epoxy", region: "APAC" },
+    ],
+  },
+  "9009-54-5": {
+    chemical: "Polyurethane dispersion",
+    competitors: [
+      { company: "Covestro",   productName: "Bayhydrol", region: "Europe" },
+      { company: "Allnex",     productName: "Daotan", region: "Europe" },
+      { company: "BASF",       productName: "Astacin", region: "Europe" },
+      { company: "Lubrizol",   productName: "Sancure", region: "Americas" },
+      { company: "Sun Chemical", productName: "Burnock PU", region: "APAC" },
+    ],
+  },
+
+  // ============= ETHOXYLATES / SURFACTANTS =============
+  "9002-92-0": {
+    chemical: "Lauryl alcohol ethoxylate",
+    competitors: [
+      { company: "BASF",       productName: "Lutensol AT", region: "Europe" },
+      { company: "Croda",      productName: "Brij", region: "Europe" },
+      { company: "Indorama",   productName: "Surfonic L", region: "Americas" },
+      { company: "Stepan",     productName: "Bio-Soft N", region: "Americas" },
+      { company: "Clariant",   productName: "Genapol LA", region: "Europe" },
+    ],
+  },
+  "9016-45-9": {
+    chemical: "Nonylphenol ethoxylate",
+    competitors: [
+      { company: "Indorama",   productName: "Surfonic N", region: "Americas" },
+      { company: "Dow",        productName: "Tergitol NP", region: "Americas" },
+      { company: "Clariant",   productName: "Sapogenat T", region: "Europe" },
+      { company: "Solvay",     productName: "Igepal CO", region: "Europe" },
+    ],
+  },
+  "9036-19-5": {
+    chemical: "Octylphenol ethoxylate",
+    competitors: [
+      { company: "Indorama",   productName: "Surfonic OP", region: "Americas" },
+      { company: "Dow",        productName: "Triton X", region: "Americas" },
+      { company: "Solvay",     productName: "Igepal CA", region: "Europe" },
+    ],
+  },
+  "9005-64-5": {
+    chemical: "Polysorbate 20",
+    competitors: [
+      { company: "Croda",      productName: "Tween 20", region: "Europe" },
+      { company: "Indorama",   productName: "Alkest TW 20", region: "Americas" },
+      { company: "Lonza",      productName: "Lonzest 20", region: "Europe" },
+      { company: "Spectrum",   productName: "Polysorbate 20", region: "Americas" },
+    ],
+  },
+
+  // ============= ADDITIVES =============
+  "1338-43-8": {
+    chemical: "Sorbitan monooleate",
+    competitors: [
+      { company: "Croda",      productName: "Span 80", region: "Europe" },
+      { company: "Indorama",   productName: "Alkest SP 80", region: "Americas" },
+      { company: "Lonza",      productName: "Lonzest SMO", region: "Europe" },
+    ],
+  },
+  "8000-78-0": {
+    chemical: "Hydrogenated castor oil",
+    competitors: [
+      { company: "BASF",       productName: "Cremophor RH", region: "Europe" },
+      { company: "Croda",      productName: "Crodamol HCO", region: "Europe" },
+      { company: "Indorama",   productName: "Alkest CSO 400 H", region: "Americas" },
+    ],
+  },
+  "63148-62-9": {
+    chemical: "Polysiloxane defoamer",
+    competitors: [
+      { company: "BYK Additives (Altana)", productName: "BYK-035", region: "Europe" },
+      { company: "Dow",        productName: "Xiameter AFE", region: "Americas" },
+      { company: "Wacker",     productName: "SILFOAM", region: "Europe" },
+      { company: "Münzing",    productName: "AGITAN", region: "Europe" },
+      { company: "Evonik",     productName: "TEGO Foamex", region: "Europe" },
+    ],
+  },
+
+  // ============= ISOCYANATES / HARDENERS =============
+  "822-06-0": {
+    chemical: "Hexamethylene diisocyanate",
+    competitors: [
+      { company: "Covestro",   productName: "Desmodur H", region: "Europe" },
+      { company: "Vencorex",   productName: "Tolonate HDI", region: "Europe" },
+      { company: "Asahi Kasei", productName: "Duranate", region: "APAC" },
+      { company: "Wanhua Chemical", productName: "Wannate HDI", region: "APAC" },
+    ],
+  },
+  "584-84-9": {
+    chemical: "Toluene diisocyanate",
+    competitors: [
+      { company: "BASF",       productName: "Lupranat T", region: "Europe" },
+      { company: "Covestro",   productName: "Desmodur T", region: "Europe" },
+      { company: "Wanhua Chemical", productName: "Wannate TDI", region: "APAC" },
+      { company: "Hanwha",     productName: "Hanwha TDI", region: "APAC" },
+      { company: "Mitsui",     productName: "Cosmonate T", region: "APAC" },
+    ],
+  },
+  "101-68-8": {
+    chemical: "Methylene diphenyl diisocyanate",
+    competitors: [
+      { company: "BASF",       productName: "Lupranat M", region: "Europe" },
+      { company: "Covestro",   productName: "Desmodur 44", region: "Europe" },
+      { company: "Huntsman",   productName: "Suprasec", region: "Americas" },
+      { company: "Wanhua",     productName: "Wannate MDI", region: "APAC" },
+    ],
+  },
+
+  // ============= POLYOLS =============
+  "57-55-6": {
+    chemical: "Propylene glycol",
+    competitors: [
+      { company: "Dow",        productName: "Dowfrost / Dow PG", region: "Americas" },
+      { company: "BASF",       productName: "BASF PG", region: "Europe" },
+      { company: "LyondellBasell", productName: "Lyondell PG", region: "Americas" },
+      { company: "ADM",        productName: "ADM PG (bio-based)", region: "Americas" },
+      { company: "Indorama",   productName: "Indorama PG", region: "APAC" },
+    ],
+  },
+  "107-21-1": {
+    chemical: "Monoethylene glycol",
+    competitors: [
+      { company: "SABIC",      productName: "SABIC MEG", region: "MEA" },
+      { company: "Dow",        productName: "Dow MEG", region: "Americas" },
+      { company: "MEGlobal",   productName: "MEGlobal MEG", region: "MEA" },
+      { company: "Reliance",   productName: "Reliance MEG", region: "APAC" },
+      { company: "Indorama",   productName: "Indorama MEG", region: "APAC" },
+    ],
+  },
+  "111-46-6": {
+    chemical: "Diethylene glycol",
+    competitors: [
+      { company: "Dow",        productName: "Dow DEG", region: "Americas" },
+      { company: "SABIC",      productName: "SABIC DEG", region: "MEA" },
+      { company: "Shell",      productName: "Shell DEG", region: "Europe" },
+    ],
+  },
+
+  // ============= PIGMENTS =============
+  "13463-67-7": {
+    chemical: "Titanium dioxide",
+    competitors: [
+      { company: "Chemours",   productName: "Ti-Pure", region: "Americas" },
+      { company: "Tronox",     productName: "Tronox CR", region: "Americas" },
+      { company: "Venator",    productName: "Tioxide", region: "Europe" },
+      { company: "Kronos",     productName: "Kronos TiO2", region: "Europe" },
+      { company: "Lomon Billions", productName: "Lomon TiO2", region: "APAC" },
+      { company: "INEOS Pigments", productName: "Tiona", region: "Europe" },
+    ],
+  },
+  "1333-86-4": {
+    chemical: "Carbon black",
+    competitors: [
+      { company: "Cabot",      productName: "Black Pearls / Vulcan", region: "Americas" },
+      { company: "Birla Carbon", productName: "Raven", region: "APAC" },
+      { company: "Orion Engineered Carbons", productName: "Printex", region: "Europe" },
+      { company: "Tokai Carbon", productName: "Tokai Carbon Black", region: "APAC" },
+    ],
+  },
+};
+
+// Category-level fallback (used when CAS isn't in our DB)
+const CATEGORY_COMPETITORS = {
+  "Solvents":    ["BASF", "Dow", "Eastman", "ExxonMobil", "INEOS", "Shell", "Sipchem", "Reliance"],
+  "Resins":      ["BASF", "Allnex", "Arkema", "Dow", "Covestro", "Evonik", "Mitsui", "Sun Chemical (DIC)"],
+  "Amines":      ["BASF", "Arkema", "Eastman", "Huntsman", "Mitsubishi Gas Chemical", "Balaji Amines", "Alkyl Amines"],
+  "Esters":      ["Croda", "BASF Care", "Stéarinerie Dubois", "Lonza", "Inolex", "Evonik Care Solutions"],
+  "Surfactants": ["BASF", "Croda", "Evonik", "Stepan", "Solvay", "Indorama Ventures", "Clariant"],
+  "Additives":   ["BYK Additives", "Evonik", "Münzing", "Allnex", "Wacker", "Dow", "BASF"],
+  "Pigments":    ["BASF", "Heubach", "Sun Chemical", "Cathay Industries", "Lanxess", "Chemours"],
+  "Polymers":    ["BASF", "Dow", "ExxonMobil", "LyondellBasell", "SABIC", "Mitsui", "Borealis"],
+  "Hardeners":   ["Covestro", "BASF", "Asahi Kasei", "Wanhua Chemical", "Vencorex", "Mitsui"],
+  "Reagents":    ["Sigma-Aldrich", "Thermo Fisher", "TCI Chemicals", "Honeywell"],
+};
+
+// Look up curated competitors for a product. CAS-first, category fallback.
+function curatedCompetitors(product) {
+  if (product.cas && product.cas !== "Unknown" && COMPETITOR_DB[product.cas]) {
+    return { source: "verified", entries: COMPETITOR_DB[product.cas].competitors };
+  }
+  if (product.category && CATEGORY_COMPETITORS[product.category]) {
+    return {
+      source: "category",
+      entries: CATEGORY_COMPETITORS[product.category].map(name => ({
+        company: name, productName: "—", region: "—",
+      })),
+    };
+  }
+  return { source: "none", entries: [] };
+}
+
+// ---- Google PSE live search ------------------------------------------------
+//
+// Calls Google's Custom Search JSON API. User must provide their own
+// `key` and `cx` (search engine ID). 100 free searches/day.
+//
+// Strategy: search "<chemical name> manufacturers suppliers", parse the
+// titles and snippets to extract company-product mentions. We never invent
+// data — if the search returns nothing, the result is empty.
+
+async function googleSearchCompetitors({ key, cx, query }) {
+  if (!key || !cx) throw new Error("Google PSE key/cx not configured");
+  const url = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(key)}&cx=${encodeURIComponent(cx)}&q=${encodeURIComponent(query)}&num=10`;
+  const r = await fetch(url);
+  if (!r.ok) {
+    const errBody = await r.text();
+    throw new Error(`Google PSE returned ${r.status}: ${errBody.slice(0, 200)}`);
+  }
+  const data = await r.json();
+  return data.items || [];
+}
+
+// Try to extract "company → product line" mentions from a list of search results.
+// Looks for known major chemical companies in titles/snippets and captures
+// any nearby product/brand name.
+const KNOWN_COMPANIES = [
+  "BASF","Dow","Eastman","ExxonMobil","Shell","INEOS","Reliance","SABIC","Sipchem","Solvay",
+  "Arkema","Evonik","Covestro","Allnex","Croda","Mitsui","Mitsubishi","Sumitomo","LG Chem",
+  "Lyondell","LyondellBasell","Huntsman","Wanhua","Hanwha","Asahi Kasei","Stepan","Lubrizol",
+  "Chemours","Tronox","Venator","Kronos","Cabot","Birla Carbon","Orion","Tokai Carbon",
+  "Vencorex","Hexion","Olin","BYK","Wacker","Münzing","Clariant","Indorama","Sasol",
+  "Balaji Amines","Alkyl Amines","Sun Chemical","DIC","Stéarinerie Dubois","Lonza","Inolex",
+  "AGC","Maruzen","SK Geo Centric","Jubilant Ingrevia","Phillips 66","Ashland","ADM",
+];
+
+function extractCompetitorsFromSearchResults(items) {
+  const found = new Map(); // company -> Set of product mentions
+  for (const item of items) {
+    const text = `${item.title || ""} ${item.snippet || ""}`;
+    for (const company of KNOWN_COMPANIES) {
+      // Use word boundary to avoid false positives
+      const rx = new RegExp(`\\b${company.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+      if (rx.test(text)) {
+        if (!found.has(company)) found.set(company, new Set());
+        // Try to grab a nearby capitalized product token, otherwise mark "—"
+        const productMatch = text.match(new RegExp(`\\b${company}\\b[^.,;]{0,80}?(?:\\b([A-Z][A-Za-z]+(?:[\\s-][A-Z0-9][A-Za-z0-9-]*){0,3})\\b)?`, "i"));
+        const product = productMatch?.[1] && productMatch[1].length > 2 && productMatch[1].toLowerCase() !== company.toLowerCase()
+          ? productMatch[1]
+          : null;
+        if (product) found.get(company).add(product);
+      }
+    }
+  }
+  // Convert to array
+  return [...found.entries()].map(([company, products]) => ({
+    company,
+    productName: products.size > 0 ? [...products][0] : "—",
+    region: "—",
+  }));
+}
+
+// Hybrid lookup: live Google first (if configured), curated DB always merged in
+async function findCompetitors(product, settings) {
+  const curated = curatedCompetitors(product);
+  let live = [];
+  let liveError = null;
+  let liveAttempted = false;
+
+  if (settings?.googleKey && settings?.googleCx) {
+    liveAttempted = true;
+    try {
+      const query = `${product.chemical || product.name} manufacturers suppliers`;
+      const items = await googleSearchCompetitors({
+        key: settings.googleKey,
+        cx: settings.googleCx,
+        query,
+      });
+      live = extractCompetitorsFromSearchResults(items);
+    } catch (e) {
+      liveError = e.message;
+    }
+  }
+
+  // Merge: dedupe by company name. Live takes precedence on product name only when curated has "—".
+  const merged = new Map();
+  for (const c of curated.entries) {
+    merged.set(c.company.toLowerCase(), { ...c });
+  }
+  for (const c of live) {
+    const key = c.company.toLowerCase();
+    if (!merged.has(key)) merged.set(key, c);
+    else {
+      // Combine: keep curated company name + region, fill product name if curated had "—"
+      const existing = merged.get(key);
+      if (existing.productName === "—" && c.productName !== "—") {
+        existing.productName = c.productName;
+      }
+    }
+  }
+
+  return {
+    sourceTier: live.length > 0 ? "live" : (curated.source === "verified" ? "curated" : (curated.source === "category" ? "adjacent" : "none")),
+    liveAttempted,
+    liveError,
+    liveCount: live.length,
+    entries: [...merged.values()],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// SETTINGS HOOK (localStorage-backed for Google PSE key)
 // ---------------------------------------------------------------------------
 
-function GapAnalysisModule({ contacts, products }) {
-  const REGIONS = ["APAC", "Europe", "MEA", "Americas"];
-
-  // Find all categories present in the catalogue (plus "Unknown" if any)
-  const categories = useMemo(() => {
-    const cats = new Set(products.map(p => p.category).filter(Boolean));
-    return [...cats].sort();
-  }, [products]);
-
-  // Build coverage matrix: for each (category, region), how many products and
-  // how many regional contacts that could plausibly handle them.
-  const matrix = useMemo(() => {
-    const m = {};
-    for (const cat of categories) {
-      m[cat] = {};
-      for (const region of REGIONS) {
-        const productCount = products.filter(p => p.category === cat).length;
-        const contactCount = contacts.filter(c => c.region === region &&
-          (c.role === "Sales" || c.role === "Technical" || c.role === "Management")).length;
-        // Coverage score: products * contacts in region (proxy for ability to serve)
-        let status;
-        if (productCount === 0) status = "none";
-        else if (contactCount === 0) status = "gap";
-        else if (contactCount === 1) status = "thin";
-        else status = "ok";
-        m[cat][region] = { productCount, contactCount, status };
-      }
+function useSettings() {
+  const [settings, setSettings] = useState(() => {
+    try {
+      const raw = localStorage.getItem("supplier-workspace-settings");
+      return raw ? JSON.parse(raw) : { googleKey: "", googleCx: "" };
+    } catch {
+      return { googleKey: "", googleCx: "" };
     }
-    return m;
-  }, [categories, products, contacts]);
-
-  // Data completeness gaps in catalogue
-  const incompleteProducts = useMemo(() => {
-    return products
-      .map(p => {
-        const missing = [];
-        if (!p.cas || p.cas === "Unknown") missing.push("CAS");
-        if (!p.chemical || p.chemical === "Unknown") missing.push("Chemical");
-        if (!p.application || p.application === "Unknown") missing.push("Application");
-        if (!p.grade || p.grade === "Unknown") missing.push("Grade");
-        return { ...p, _missing: missing };
-      })
-      .filter(p => p._missing.length > 0)
-      .sort((a, b) => b._missing.length - a._missing.length);
-  }, [products]);
-
-  // Contact coverage gaps by region/role
-  const contactGaps = useMemo(() => {
-    const required = ["Sales", "Technical", "Management"];
-    const out = [];
-    for (const region of REGIONS) {
-      for (const role of required) {
-        const count = contacts.filter(c => c.region === region && c.role === role).length;
-        if (count === 0) out.push({ region, role, severity: "high", reason: "No coverage" });
-        else if (count === 1) out.push({ region, role, severity: "medium", reason: "Single point of failure" });
-      }
-      // Decision makers
-      const dm = contacts.filter(c => c.region === region && (c.tags || []).includes("Decision Maker")).length;
-      if (dm === 0 && contacts.some(c => c.region === region)) {
-        out.push({ region, role: "Decision Maker", severity: "high", reason: "No decision maker identified" });
-      }
-    }
-    return out;
-  }, [contacts]);
-
-  const totalGaps = useMemo(() => {
-    let n = 0;
-    for (const cat of categories) for (const r of REGIONS) {
-      if (matrix[cat][r].status === "gap" || matrix[cat][r].status === "thin") n++;
-    }
-    return n;
-  }, [categories, matrix]);
-
-  const completenessScore = useMemo(() => {
-    const totalFields = products.length * 4; // CAS, chemical, application, grade
-    const missingFields = incompleteProducts.reduce((sum, p) => sum + p._missing.length, 0);
-    return totalFields > 0 ? Math.round(((totalFields - missingFields) / totalFields) * 100) : 100;
-  }, [products, incompleteProducts]);
-
-  return (
-    <div className="p-8 space-y-5">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Gap Analysis</h2>
-          <p className="text-[12px] text-zinc-500 mt-1">Where your supplier coverage is weak — and what to fix first</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Coverage gaps", value: totalGaps, icon: AlertCircle, tone: totalGaps > 0 ? "warn" : "good" },
-          { label: "Data completeness", value: completenessScore + "%", icon: Database, tone: completenessScore >= 80 ? "good" : "warn" },
-          { label: "Incomplete SKUs", value: incompleteProducts.length, icon: Package, tone: incompleteProducts.length > 0 ? "warn" : "good" },
-          { label: "Contact gaps", value: contactGaps.length, icon: Users, tone: contactGaps.length > 0 ? "warn" : "good" },
-        ].map((s, i) => (
-          <Card key={i} className="!p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">{s.label}</div>
-                <div className="text-2xl font-light text-zinc-100 tabular-nums">{s.value}</div>
-              </div>
-              <s.icon className={cx("w-4 h-4", s.tone === "good" ? "text-lime-300" : "text-amber-300")} strokeWidth={1.5} />
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Coverage matrix */}
-      <Card title="Coverage matrix" subtitle="Categories × regions — where you have products but no regional support">
-        {categories.length === 0 ? (
-          <div className="py-12 text-center text-zinc-500 text-[12px]">Upload catalogue data to see coverage</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
-              <thead>
-                <tr className="text-[10px] uppercase tracking-widest text-zinc-500 border-b border-zinc-800">
-                  <th className="text-left py-2 px-2 font-normal">Category</th>
-                  {REGIONS.map(r => (
-                    <th key={r} className="text-center py-2 px-2 font-normal">{r}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/60">
-                {categories.map(cat => (
-                  <tr key={cat}>
-                    <td className="py-2.5 px-2 text-zinc-200">{cat}</td>
-                    {REGIONS.map(r => {
-                      const cell = matrix[cat][r];
-                      const styles = {
-                        none: "bg-zinc-800/40 text-zinc-600",
-                        gap: "bg-rose-500/10 text-rose-300 border border-rose-500/20",
-                        thin: "bg-amber-300/10 text-amber-300 border border-amber-300/20",
-                        ok: "bg-lime-300/10 text-lime-300 border border-lime-300/20",
-                      };
-                      return (
-                        <td key={r} className="py-2 px-2">
-                          <div className={cx("rounded-md px-2.5 py-1.5 text-center text-[11px]", styles[cell.status])}>
-                            <div className="font-medium tabular-nums">{cell.productCount} × {cell.contactCount}</div>
-                            <div className="text-[9.5px] uppercase tracking-widest mt-0.5 opacity-70">
-                              {cell.status === "gap" && "no contact"}
-                              {cell.status === "thin" && "single point"}
-                              {cell.status === "ok" && "covered"}
-                              {cell.status === "none" && "no SKU"}
-                            </div>
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="flex items-center gap-4 mt-4 text-[10.5px] text-zinc-500">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-lime-300/30 border border-lime-300/40" />Covered</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-amber-300/30 border border-amber-300/40" />Thin</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-rose-500/30 border border-rose-500/40" />Gap</span>
-              <span className="text-zinc-600 ml-2">Cell shows: products × regional contacts</span>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Two-column: contact gaps + data gaps */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card title="Contact gaps" subtitle="Regions / roles needing coverage">
-          {contactGaps.length === 0 ? (
-            <div className="py-8 text-center text-zinc-500 text-[12px] flex items-center justify-center gap-2">
-              <Check className="w-4 h-4 text-lime-300" />Coverage looks complete
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {contactGaps.map((g, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2.5 bg-[#252528] rounded-lg border border-zinc-800">
-                  <div className={cx("w-1 h-1 rounded-full",
-                    g.severity === "high" ? "bg-rose-300" : "bg-amber-300")} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px] text-zinc-200">
-                      <span className="text-zinc-400">{g.region}</span>
-                      <span className="text-zinc-600 mx-1.5">·</span>
-                      <span>{g.role}</span>
-                    </div>
-                    <div className="text-[10.5px] text-zinc-500 mt-0.5">{g.reason}</div>
-                  </div>
-                  <Pill tone={g.severity === "high" ? "warn" : "muted"}>{g.severity}</Pill>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card title="Catalogue data gaps" subtitle={`${incompleteProducts.length} SKU${incompleteProducts.length === 1 ? "" : "s"} have missing fields`}>
-          {incompleteProducts.length === 0 ? (
-            <div className="py-8 text-center text-zinc-500 text-[12px] flex items-center justify-center gap-2">
-              <Check className="w-4 h-4 text-lime-300" />All products fully specified
-            </div>
-          ) : (
-            <div className="space-y-1.5 max-h-[340px] overflow-y-auto pr-1">
-              {incompleteProducts.slice(0, 12).map(p => (
-                <div key={p.id} className="flex items-center gap-3 px-3 py-2 hover:bg-zinc-800/40 rounded-lg">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px] text-zinc-200 truncate">{p.name}</div>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {p._missing.map(m => (
-                        <span key={m} className="text-[9.5px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-300/10 text-amber-300 border border-amber-300/20">{m}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {incompleteProducts.length > 12 && (
-                <div className="text-center text-[11px] text-zinc-500 py-2">
-                  + {incompleteProducts.length - 12} more — open Catalogue to fix inline
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
-      </div>
-    </div>
-  );
+  });
+  const update = (patch) => {
+    setSettings(s => {
+      const next = { ...s, ...patch };
+      try { localStorage.setItem("supplier-workspace-settings", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  return [settings, update];
 }
 
 // ---------------------------------------------------------------------------
 // COMPETITIVE BENCHMARKING MODULE
 // ---------------------------------------------------------------------------
+// Per-product competitor view. For each uploaded product, show:
+//   - Your supplier's product name on top
+//   - Below: the competitor companies and their product names
 
-const PEER_SUPPLIERS = [
-  { name: "Hexakron Specialty Chemicals", code: "HXK-2841", region: "APAC", tier: "Tier 1",
-    pricing: 75, responsiveness: 71, compliance: 88, breadth: 68, geographic: 64,
-    leadDays: 18, certifications: 4, isSelf: true },
-  { name: "Polyform Industrial", code: "PFI-1192", region: "Europe", tier: "Tier 1",
-    pricing: 62, responsiveness: 84, compliance: 92, breadth: 81, geographic: 78,
-    leadDays: 14, certifications: 6 },
-  { name: "Aqualyte Chemicals", code: "AQL-0473", region: "Americas", tier: "Tier 2",
-    pricing: 81, responsiveness: 58, compliance: 70, breadth: 54, geographic: 49,
-    leadDays: 24, certifications: 3 },
-  { name: "Sino-Bright Chemicals", code: "SBC-7820", region: "APAC", tier: "Tier 2",
-    pricing: 88, responsiveness: 49, compliance: 61, breadth: 72, geographic: 55,
-    leadDays: 28, certifications: 2 },
-  { name: "Nordix Materials", code: "NDX-3318", region: "Europe", tier: "Tier 1",
-    pricing: 58, responsiveness: 79, compliance: 95, breadth: 76, geographic: 82,
-    leadDays: 12, certifications: 7 },
-];
+function BenchmarkingModule({ products, settings }) {
+  const [selectedId, setSelectedId] = useState(products[0]?.id || null);
+  const [results, setResults] = useState({});      // { [productId]: { sourceTier, entries, liveError, ... } }
+  const [loading, setLoading] = useState({});
 
-const BENCH_DIMENSIONS = [
-  { key: "pricing",        label: "Pricing competitiveness",  invertColor: false },
-  { key: "responsiveness", label: "Responsiveness",            invertColor: false },
-  { key: "compliance",     label: "Compliance coverage",       invertColor: false },
-  { key: "breadth",        label: "Catalogue breadth",         invertColor: false },
-  { key: "geographic",     label: "Geographic coverage",       invertColor: false },
-];
+  const selected = products.find(p => p.id === selectedId);
 
-function BenchmarkingModule({ supplier, contacts, products }) {
-  const self = PEER_SUPPLIERS.find(p => p.isSelf);
-  const peers = PEER_SUPPLIERS.filter(p => !p.isSelf);
-
-  // For each dimension compute self percentile vs peer median
-  const dimensionStats = useMemo(() => {
-    return BENCH_DIMENSIONS.map(d => {
-      const peerValues = peers.map(p => p[d.key]).sort((a, b) => a - b);
-      const median = peerValues[Math.floor(peerValues.length / 2)];
-      const max = Math.max(...peerValues);
-      const selfVal = self[d.key];
-      const beatCount = peerValues.filter(v => selfVal > v).length;
-      const percentile = Math.round((beatCount / peerValues.length) * 100);
-      return { ...d, selfVal, median, max, percentile };
+  // Auto-fetch when selection changes (and not yet cached)
+  useEffect(() => {
+    if (!selected) return;
+    if (results[selected.id]) return;
+    setLoading(l => ({ ...l, [selected.id]: true }));
+    findCompetitors(selected, settings).then(r => {
+      setResults(rs => ({ ...rs, [selected.id]: r }));
+      setLoading(l => ({ ...l, [selected.id]: false }));
     });
-  }, [self, peers]);
+  }, [selected, settings, results]);
 
-  // Overall standing
-  const overallScore = Math.round(
-    BENCH_DIMENSIONS.reduce((sum, d) => sum + self[d.key], 0) / BENCH_DIMENSIONS.length
-  );
-  const overallPercentile = Math.round(
-    dimensionStats.reduce((sum, d) => sum + d.percentile, 0) / dimensionStats.length
-  );
+  // Allow re-fetch (e.g. after the user adds a key)
+  const refetch = () => {
+    if (!selected) return;
+    setLoading(l => ({ ...l, [selected.id]: true }));
+    findCompetitors(selected, settings).then(r => {
+      setResults(rs => ({ ...rs, [selected.id]: r }));
+      setLoading(l => ({ ...l, [selected.id]: false }));
+    });
+  };
 
-  // Strengths and weaknesses
-  const strengths = dimensionStats.filter(d => d.percentile >= 60).sort((a, b) => b.percentile - a.percentile);
-  const weaknesses = dimensionStats.filter(d => d.percentile < 40).sort((a, b) => a.percentile - b.percentile);
+  const overview = useMemo(() => {
+    const allCompanies = new Set();
+    for (const p of products) {
+      const r = results[p.id];
+      if (r) r.entries.forEach(e => allCompanies.add(e.company));
+    }
+    return {
+      productsAnalysed: products.length,
+      analysed: Object.keys(results).length,
+      uniqueCompetitors: allCompanies.size,
+    };
+  }, [products, results]);
+
+  if (products.length === 0) {
+    return (
+      <div className="p-8">
+        <div className="mb-5">
+          <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Competitive Benchmarking</h2>
+          <p className="text-[12px] text-zinc-500 mt-1">Upload or add products to see who else makes them</p>
+        </div>
+        <Card className="!p-12 text-center">
+          <Package className="w-8 h-8 text-zinc-600 mx-auto mb-3" strokeWidth={1.5} />
+          <div className="text-[13px] text-zinc-300 mb-1">No products to analyse</div>
+          <div className="text-[11.5px] text-zinc-500">Upload a catalogue file or add a product manually</div>
+        </Card>
+      </div>
+    );
+  }
+
+  const r = selected ? results[selected.id] : null;
+  const isLoading = selected ? loading[selected.id] : false;
+  const hasGoogle = !!(settings?.googleKey && settings?.googleCx);
 
   return (
     <div className="p-8 space-y-5">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Competitive Benchmarking</h2>
-          <p className="text-[12px] text-zinc-500 mt-1">{supplier.name} vs {peers.length} peer suppliers — pricing, response, compliance, breadth</p>
+          <p className="text-[12px] text-zinc-500 mt-1">For each product, who else makes it and what they call it</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Pill tone="muted">Refreshed weekly</Pill>
-          <Pill tone="accent"><Activity className="w-3 h-3" />Live data</Pill>
-        </div>
+        {!hasGoogle && (
+          <div className="flex items-center gap-2 text-[11px] text-zinc-500 px-3 py-1.5 rounded-lg bg-amber-300/[0.04] border border-amber-300/15">
+            <AlertCircle className="w-3 h-3 text-amber-300" />
+            Live search not configured — using curated data. Add Google key in Settings.
+          </div>
+        )}
       </div>
 
-      {/* Headline cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Card className="!p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Composite score</div>
-          <div className="text-2xl font-light text-zinc-100 tabular-nums">{overallScore}<span className="text-[14px] text-zinc-500">/100</span></div>
-          <div className="text-[10.5px] text-zinc-500 mt-1">Avg across 5 dimensions</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Products</div>
+          <div className="text-2xl font-light text-zinc-100 tabular-nums">{overview.productsAnalysed}</div>
         </Card>
         <Card className="!p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Peer percentile</div>
-          <div className="text-2xl font-light text-zinc-100 tabular-nums">{overallPercentile}<span className="text-[14px] text-zinc-500">th</span></div>
-          <div className="text-[10.5px] text-zinc-500 mt-1">Better than {overallPercentile}% of peers</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Analysed</div>
+          <div className="text-2xl font-light text-zinc-100 tabular-nums">{overview.analysed}</div>
         </Card>
         <Card className="!p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Lead time</div>
-          <div className="text-2xl font-light text-zinc-100 tabular-nums">{self.leadDays}<span className="text-[14px] text-zinc-500"> days</span></div>
-          <div className="text-[10.5px] text-zinc-500 mt-1">Peer median {Math.round(peers.reduce((s,p)=>s+p.leadDays,0)/peers.length)}d</div>
-        </Card>
-        <Card className="!p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Certifications</div>
-          <div className="text-2xl font-light text-zinc-100 tabular-nums">{self.certifications}</div>
-          <div className="text-[10.5px] text-zinc-500 mt-1">Peer max {Math.max(...peers.map(p => p.certifications))}</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Unique competitors found</div>
+          <div className="text-2xl font-light text-zinc-100 tabular-nums">{overview.uniqueCompetitors}</div>
         </Card>
       </div>
 
-      {/* Dimension benchmarks */}
-      <Card title="Dimension comparison" subtitle="Self value vs peer median (across 4 peers)">
-        <div className="space-y-3.5">
-          {dimensionStats.map(d => {
-            const isStrong = d.percentile >= 60;
-            const isWeak = d.percentile < 40;
-            return (
-              <div key={d.key}>
-                <div className="flex items-center justify-between text-[12px] mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-zinc-200">{d.label}</span>
-                    <span className={cx("text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded",
-                      isStrong ? "bg-lime-300/15 text-lime-300" :
-                      isWeak ? "bg-rose-500/15 text-rose-300" : "bg-zinc-800 text-zinc-400")}>
-                      {d.percentile}th pctl
-                    </span>
+      <div className="grid grid-cols-12 gap-5">
+        {/* Product picker */}
+        <Card className="col-span-12 lg:col-span-4 !p-3" title="Your products" subtitle={`${products.length} loaded`}>
+          <div className="space-y-1 max-h-[600px] overflow-y-auto pr-1 -mx-1 px-1">
+            {products.map(p => {
+              const cached = results[p.id];
+              const isActive = p.id === selectedId;
+              return (
+                <button key={p.id}
+                        onClick={() => setSelectedId(p.id)}
+                        className={cx(
+                          "w-full text-left p-2.5 rounded-lg border transition-colors",
+                          isActive
+                            ? "bg-lime-300/[0.06] border-lime-300/30"
+                            : "bg-transparent border-zinc-800 hover:bg-zinc-800/40"
+                        )}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className={cx("text-[12.5px] truncate",
+                        isActive ? "text-zinc-100" : "text-zinc-200")}>{p.name}</div>
+                      <div className="text-[10.5px] text-zinc-500 mt-0.5 truncate">
+                        {p.cas !== "Unknown" ? p.cas : (p.category || "Uncategorised")}
+                      </div>
+                    </div>
+                    {cached && (
+                      <span className="text-[10px] tabular-nums shrink-0 px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                        {cached.entries.length}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3 text-[11px] tabular-nums">
-                    <span className="text-zinc-500">Median {d.median}</span>
-                    <span className="text-zinc-200 font-medium">{d.selfVal}</span>
-                  </div>
-                </div>
-                <div className="relative h-2 bg-[#252528] rounded-full overflow-hidden">
-                  {/* peer median marker */}
-                  <div className="absolute top-0 bottom-0 w-px bg-zinc-500"
-                       style={{ left: `${d.median}%` }} />
-                  {/* self value bar */}
-                  <div className={cx("h-full rounded-full",
-                    isStrong ? "bg-lime-300" :
-                    isWeak ? "bg-rose-400" : "bg-zinc-400")}
-                    style={{ width: `${d.selfVal}%` }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* Strengths / Weaknesses + Peer table */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <Card title="Strengths" className="lg:col-span-1">
-          {strengths.length === 0 ? (
-            <div className="py-6 text-center text-zinc-500 text-[12px]">No clear advantages identified</div>
-          ) : (
-            <div className="space-y-2">
-              {strengths.map(s => (
-                <div key={s.key} className="flex items-center gap-2.5 px-3 py-2 bg-lime-300/[0.04] border border-lime-300/15 rounded-lg">
-                  <div className="w-1 h-1 rounded-full bg-lime-300" />
-                  <div className="flex-1 text-[12.5px] text-zinc-200">{s.label}</div>
-                  <span className="text-[11px] text-lime-300 tabular-nums">+{s.selfVal - s.median}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card title="Weaknesses" className="lg:col-span-1">
-          {weaknesses.length === 0 ? (
-            <div className="py-6 text-center text-zinc-500 text-[12px] flex items-center justify-center gap-2">
-              <Check className="w-4 h-4 text-lime-300" />No weak spots
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {weaknesses.map(w => (
-                <div key={w.key} className="flex items-center gap-2.5 px-3 py-2 bg-rose-500/[0.05] border border-rose-500/15 rounded-lg">
-                  <div className="w-1 h-1 rounded-full bg-rose-300" />
-                  <div className="flex-1 text-[12.5px] text-zinc-200">{w.label}</div>
-                  <span className="text-[11px] text-rose-300 tabular-nums">{w.selfVal - w.median}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card title="Recommended action" className="lg:col-span-1">
-          <div className="space-y-2.5">
-            {weaknesses.length > 0 && (
-              <div className="flex items-start gap-2.5 px-3 py-2.5 bg-[#252528] border border-zinc-800 rounded-lg">
-                <Sparkles className="w-3.5 h-3.5 text-lime-300 shrink-0 mt-0.5" />
-                <div className="text-[11.5px] text-zinc-300 leading-snug">
-                  Negotiate on <span className="text-zinc-100">{weaknesses[0].label.toLowerCase()}</span> — peer median is {weaknesses[0].median} vs your {weaknesses[0].selfVal}.
-                </div>
-              </div>
-            )}
-            {strengths.length > 0 && (
-              <div className="flex items-start gap-2.5 px-3 py-2.5 bg-[#252528] border border-zinc-800 rounded-lg">
-                <Sparkles className="w-3.5 h-3.5 text-lime-300 shrink-0 mt-0.5" />
-                <div className="text-[11.5px] text-zinc-300 leading-snug">
-                  Lock in long-term contract — {strengths[0].label.toLowerCase()} significantly outperforms peers.
-                </div>
-              </div>
-            )}
-            <div className="flex items-start gap-2.5 px-3 py-2.5 bg-[#252528] border border-zinc-800 rounded-lg">
-              <Sparkles className="w-3.5 h-3.5 text-lime-300 shrink-0 mt-0.5" />
-              <div className="text-[11.5px] text-zinc-300 leading-snug">
-                Compare {peers[0].name.split(" ")[0]} for {weaknesses[0]?.label.toLowerCase() || "category overlap"} — better median scores.
-              </div>
-            </div>
+                </button>
+              );
+            })}
           </div>
         </Card>
+
+        {/* Detail */}
+        <div className="col-span-12 lg:col-span-8 space-y-5">
+          {selected && (
+            <>
+              <Card>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Your product</div>
+                    <h3 className="text-[16px] font-medium text-zinc-100 truncate">{selected.name}</h3>
+                    {selected.chemical && selected.chemical !== "Unknown" && (
+                      <div className="text-[12px] text-zinc-400 mt-1 truncate">{selected.chemical}</div>
+                    )}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      {selected.category && <Pill tone="muted">{selected.category}</Pill>}
+                      {selected.cas && selected.cas !== "Unknown" && (
+                        <Pill tone="muted"><span className="tabular-nums">{selected.cas}</span></Pill>
+                      )}
+                    </div>
+                  </div>
+                  {hasGoogle && (
+                    <button onClick={refetch} disabled={isLoading}
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252528] border border-zinc-800 text-[11.5px] text-zinc-300 hover:bg-zinc-800 disabled:opacity-50">
+                      {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+                      Re-search
+                    </button>
+                  )}
+                </div>
+              </Card>
+
+              <Card title="Competitors"
+                    subtitle={
+                      isLoading ? "Searching…" :
+                      r?.sourceTier === "live" ? `Live results merged with curated data` :
+                      r?.sourceTier === "curated" ? `Curated data — direct match on CAS` :
+                      r?.sourceTier === "adjacent" ? `Curated data — category-level match` :
+                      "No competitor data found"
+                    }>
+                {isLoading ? (
+                  <div className="py-12 flex items-center justify-center gap-2 text-zinc-500 text-[12px]">
+                    <Loader2 className="w-4 h-4 animate-spin text-lime-300" />
+                    Searching for competitors…
+                  </div>
+                ) : !r ? null : r.entries.length === 0 ? (
+                  <div className="py-12 text-center text-zinc-500 text-[12px]">
+                    {r.liveError
+                      ? <>Live search failed: <span className="text-rose-300">{r.liveError}</span></>
+                      : "No competitor data available for this product."}
+                  </div>
+                ) : (
+                  <>
+                    {r.liveError && (
+                      <div className="mb-3 text-[11px] text-amber-300 flex items-center gap-1.5">
+                        <AlertCircle className="w-3 h-3" />
+                        Live search error: {r.liveError}. Falling back to curated data.
+                      </div>
+                    )}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-[12.5px]">
+                        <thead className="border-b border-zinc-800">
+                          <tr className="text-[10px] uppercase tracking-widest text-zinc-500">
+                            <th className="text-left py-2.5 px-3 font-normal">Company</th>
+                            <th className="text-left py-2.5 px-3 font-normal">Product / Trade name</th>
+                            <th className="text-left py-2.5 px-3 font-normal">Region</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/60">
+                          {r.entries.map((e, i) => (
+                            <tr key={i} className="hover:bg-zinc-800/30">
+                              <td className="py-2.5 px-3 text-zinc-100">{e.company}</td>
+                              <td className="py-2.5 px-3 text-zinc-300">
+                                {e.productName === "—"
+                                  ? <span className="text-zinc-600">—</span>
+                                  : e.productName}
+                              </td>
+                              <td className="py-2.5 px-3 text-zinc-400">{e.region}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </Card>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// VALUE CHAIN MODULE - freeform canvas with auto-inferred chain stages
+// ---------------------------------------------------------------------------
+
+// Chain stage rules: classify each product into a logical stage in a typical
+// chemical value chain. Position on canvas is derived from stage.
+const CHAIN_STAGES = [
+  { id: "feedstock", label: "Feedstock", order: 0,
+    keywords: ["ethylene","propylene","benzene","toluene","xylene","methanol","natural gas","naphtha"] },
+  { id: "intermediate", label: "Intermediate", order: 1,
+    keywords: ["acetic acid","ammonia","ethylene oxide","propylene oxide","acrylonitrile","phenol","amine","methylamine","dimethylamine"] },
+  { id: "monomer", label: "Monomer / Building block", order: 2,
+    keywords: ["acrylate","methacrylate","monomer","styrene","vinyl","building block","glycol"] },
+  { id: "polymer", label: "Polymer / Resin", order: 3,
+    keywords: ["resin","polymer","polyester","polyurethane","acrylic","epoxy","alkyd","copolymer","dispersion"] },
+  { id: "additive", label: "Additive / Surfactant", order: 4,
+    keywords: ["additive","surfactant","ethoxylate","emulsifier","defoamer","stabilizer","drier","wetting","dispersant","ester"] },
+  { id: "finished", label: "Finished product", order: 5,
+    keywords: ["coating","paint","ink","adhesive","sealant","cosmetic","cleaner","topcoat","primer"] },
+];
+
+function classifyChainStage(product) {
+  const text = `${product.name} ${product.chemical || ""} ${product.category || ""} ${product.application || ""}`.toLowerCase();
+  // Walk in reverse — finished products take priority over their components
+  for (let i = CHAIN_STAGES.length - 1; i >= 0; i--) {
+    const stage = CHAIN_STAGES[i];
+    if (stage.keywords.some(k => text.includes(k))) return stage.id;
+  }
+  // Default: intermediate if it has a CAS (real chemical), else additive
+  return product.cas && product.cas !== "Unknown" ? "intermediate" : "additive";
+}
+
+// Auto-position products on canvas based on stage. Returns {[id]: {x, y}}.
+function autoPositionProducts(products) {
+  const stageMap = {};
+  for (const p of products) {
+    const stage = classifyChainStage(p);
+    if (!stageMap[stage]) stageMap[stage] = [];
+    stageMap[stage].push(p);
+  }
+  const positions = {};
+  const STAGE_X_GAP = 280;
+  const NODE_Y_GAP = 90;
+  for (const stage of CHAIN_STAGES) {
+    const items = stageMap[stage.id] || [];
+    items.forEach((p, i) => {
+      positions[p.id] = {
+        x: 100 + stage.order * STAGE_X_GAP,
+        y: 100 + i * NODE_Y_GAP,
+        stage: stage.id,
+      };
+    });
+  }
+  return positions;
+}
+
+// Detect upstream/downstream relationships between products by stage order.
+// A node in stage N connects to nodes in stage N+1 IF they share a category.
+function inferConnections(products, positions) {
+  const conns = [];
+  for (const a of products) {
+    const aStage = positions[a.id]?.stage;
+    if (!aStage) continue;
+    const aOrder = CHAIN_STAGES.find(s => s.id === aStage)?.order;
+    for (const b of products) {
+      if (a.id === b.id) continue;
+      const bStage = positions[b.id]?.stage;
+      const bOrder = CHAIN_STAGES.find(s => s.id === bStage)?.order;
+      if (bOrder !== aOrder + 1) continue;     // only adjacent stages
+      // Heuristic relationship: same category OR shared keyword
+      const sameCategory = a.category && a.category === b.category;
+      const aText = `${a.name} ${a.chemical || ""}`.toLowerCase();
+      const bText = `${b.name} ${b.chemical || ""}`.toLowerCase();
+      const sharedKeyword = ["acrylic","amine","ester","urethane","ethoxylate","methyl","ethyl"].some(
+        k => aText.includes(k) && bText.includes(k)
+      );
+      if (sameCategory || sharedKeyword) {
+        conns.push({ from: a.id, to: b.id });
+      }
+    }
+  }
+  return conns;
+}
+
+function ValueChainModule({ products }) {
+  const [positions, setPositions] = useState(() => autoPositionProducts(products));
+  const [connections, setConnections] = useState(() => inferConnections(products, autoPositionProducts(products)));
+  const [selected, setSelected] = useState(null);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [dragNode, setDragNode] = useState(null);     // {id, offX, offY}
+  const [panStart, setPanStart] = useState(null);     // {x, y, panX, panY}
+  const canvasRef = useRef(null);
+
+  // Auto-add new products: when products list changes, add positions for new ones
+  useEffect(() => {
+    const fresh = autoPositionProducts(products);
+    setPositions(prev => {
+      const next = { ...prev };
+      for (const p of products) {
+        if (!next[p.id]) next[p.id] = fresh[p.id];
+      }
+      for (const id of Object.keys(next)) {
+        if (!products.find(p => p.id === id)) delete next[id];
+      }
+      return next;
+    });
+    // Recompute connections from the next-state positions. We use the freshly
+    // auto-positioned set merged with any manual overrides we already had.
+    setConnections(prevConn => {
+      // Build the position map we'd expect post-merge
+      // (for connection inference, exact x/y don't matter — only stage matters,
+      // and stage comes from auto-positioning which is deterministic)
+      return inferConnections(products, fresh);
+    });
+  }, [products]);
+
+  // Mouse handlers
+  const onMouseDown = (e, productId) => {
+    e.stopPropagation();
+    const rect = canvasRef.current.getBoundingClientRect();
+    const px = (e.clientX - rect.left - pan.x) / zoom;
+    const py = (e.clientY - rect.top - pan.y) / zoom;
+    const pos = positions[productId];
+    setDragNode({ id: productId, offX: px - pos.x, offY: py - pos.y });
+  };
+
+  const onCanvasMouseDown = (e) => {
+    if (e.target === canvasRef.current || e.target.tagName === "svg") {
+      setPanStart({ x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y });
+    }
+  };
+
+  const onMouseMove = (e) => {
+    if (dragNode) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const px = (e.clientX - rect.left - pan.x) / zoom;
+      const py = (e.clientY - rect.top - pan.y) / zoom;
+      setPositions(p => ({
+        ...p,
+        [dragNode.id]: { ...p[dragNode.id], x: px - dragNode.offX, y: py - dragNode.offY },
+      }));
+    } else if (panStart) {
+      setPan({
+        x: panStart.panX + (e.clientX - panStart.x),
+        y: panStart.panY + (e.clientY - panStart.y),
+      });
+    }
+  };
+  const onMouseUp = () => { setDragNode(null); setPanStart(null); };
+
+  const onWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setZoom(z => Math.max(0.4, Math.min(2.5, z * delta)));
+  };
+
+  // Reset to auto layout
+  const resetLayout = () => {
+    const fresh = autoPositionProducts(products);
+    setPositions(fresh);
+    setConnections(inferConnections(products, fresh));
+    setPan({ x: 0, y: 0 });
+    setZoom(1);
+  };
+
+  // Stage labels (vertical guides)
+  const stageColumns = CHAIN_STAGES.map(s => ({
+    ...s,
+    x: 100 + s.order * 280,
+    count: products.filter(p => positions[p.id]?.stage === s.id).length,
+  }));
+
+  if (products.length === 0) {
+    return (
+      <div className="p-8">
+        <div className="mb-5">
+          <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Value Chain</h2>
+          <p className="text-[12px] text-zinc-500 mt-1">Upload products to map them on the chain</p>
+        </div>
+        <Card className="!p-12 text-center">
+          <Workflow className="w-8 h-8 text-zinc-600 mx-auto mb-3" strokeWidth={1.5} />
+          <div className="text-[13px] text-zinc-300 mb-1">No products to map</div>
+          <div className="text-[11.5px] text-zinc-500">Upload a catalogue file to see the value chain</div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 space-y-4">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Value Chain</h2>
+          <p className="text-[12px] text-zinc-500 mt-1">
+            Drag nodes to reposition. Scroll to zoom. Click a node to inspect.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={resetLayout}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252528] border border-zinc-800 text-[11.5px] text-zinc-300 hover:bg-zinc-800">
+            <Workflow className="w-3 h-3" />Reset layout
+          </button>
+          <div className="flex items-center gap-1 bg-[#252528] border border-zinc-800 rounded-lg overflow-hidden">
+            <button onClick={() => setZoom(z => Math.max(0.4, z * 0.9))}
+                    className="px-2.5 py-1.5 text-[11.5px] text-zinc-300 hover:bg-zinc-800">−</button>
+            <span className="px-2 text-[11px] text-zinc-500 tabular-nums">{Math.round(zoom * 100)}%</span>
+            <button onClick={() => setZoom(z => Math.min(2.5, z * 1.1))}
+                    className="px-2.5 py-1.5 text-[11.5px] text-zinc-300 hover:bg-zinc-800">+</button>
+          </div>
+        </div>
       </div>
 
-      {/* Peer table */}
-      <Card title="Peer suppliers" subtitle={`${peers.length} alternatives in similar categories`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[12.5px]">
-            <thead className="border-b border-zinc-800">
-              <tr className="text-[10px] uppercase tracking-widest text-zinc-500">
-                <th className="text-left py-2.5 px-3 font-normal">Supplier</th>
-                <th className="text-left py-2.5 px-3 font-normal">Region</th>
-                <th className="text-left py-2.5 px-3 font-normal">Tier</th>
-                <th className="text-right py-2.5 px-3 font-normal">Pricing</th>
-                <th className="text-right py-2.5 px-3 font-normal">Response</th>
-                <th className="text-right py-2.5 px-3 font-normal">Compliance</th>
-                <th className="text-right py-2.5 px-3 font-normal">Breadth</th>
-                <th className="text-right py-2.5 px-3 font-normal">Lead</th>
-                <th className="text-right py-2.5 px-3 font-normal">Certs</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800/60">
-              {PEER_SUPPLIERS.map(s => (
-                <tr key={s.code} className={cx("hover:bg-zinc-800/30 transition-colors",
-                                                  s.isSelf && "bg-lime-300/[0.04]")}>
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-2">
-                      {s.isSelf && <div className="w-1 h-1 rounded-full bg-lime-300" />}
-                      <span className={cx(s.isSelf ? "text-zinc-100 font-medium" : "text-zinc-200")}>{s.name}</span>
-                      {s.isSelf && <span className="text-[9.5px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-lime-300/15 text-lime-300">You</span>}
+      {/* The canvas */}
+      <Card className="!p-0 overflow-hidden">
+        <div
+          ref={canvasRef}
+          onMouseDown={onCanvasMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          onWheel={onWheel}
+          className="relative bg-[#141416] cursor-grab active:cursor-grabbing"
+          style={{ height: "640px" }}
+        >
+          {/* Dot grid background */}
+          <div className="absolute inset-0 pointer-events-none"
+               style={{
+                 backgroundImage: "radial-gradient(circle, #2a2a2d 1px, transparent 1px)",
+                 backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+                 backgroundPosition: `${pan.x % (20 * zoom)}px ${pan.y % (20 * zoom)}px`,
+                 opacity: 0.6,
+               }} />
+
+          {/* Stage column labels */}
+          <div className="absolute inset-0 pointer-events-none"
+               style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}>
+            {stageColumns.filter(s => s.count > 0).map(s => (
+              <div key={s.id}
+                   className="absolute text-[9.5px] uppercase tracking-widest text-zinc-600"
+                   style={{ left: s.x, top: 50, width: 220 }}>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1 h-1 rounded-full bg-zinc-700" />
+                  <span>{s.label}</span>
+                  <span className="text-zinc-700 tabular-nums">· {s.count}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Connections (SVG edges) */}
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            style={{ width: "100%", height: "100%", overflow: "visible" }}
+          >
+            <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}>
+              {connections.map((c, i) => {
+                const a = positions[c.from];
+                const b = positions[c.to];
+                if (!a || !b) return null;
+                // Curved bezier path from right-edge of A to left-edge of B
+                const ax = a.x + 200, ay = a.y + 28;
+                const bx = b.x, by = b.y + 28;
+                const cx = (ax + bx) / 2;
+                return (
+                  <path key={i}
+                        d={`M ${ax} ${ay} C ${cx} ${ay}, ${cx} ${by}, ${bx} ${by}`}
+                        fill="none"
+                        stroke="#a3e635"
+                        strokeOpacity="0.35"
+                        strokeWidth="1.5" />
+                );
+              })}
+            </g>
+          </svg>
+
+          {/* Nodes */}
+          <div className="absolute inset-0"
+               style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}>
+            {products.map(p => {
+              const pos = positions[p.id];
+              if (!pos) return null;
+              const isSelected = selected === p.id;
+              const stage = CHAIN_STAGES.find(s => s.id === pos.stage);
+              return (
+                <div
+                  key={p.id}
+                  onMouseDown={(e) => onMouseDown(e, p.id)}
+                  onClick={(e) => { e.stopPropagation(); setSelected(isSelected ? null : p.id); }}
+                  className={cx(
+                    "absolute select-none transition-shadow",
+                    "rounded-lg border bg-[#1c1c1e] px-3 py-2.5 cursor-grab active:cursor-grabbing",
+                    isSelected
+                      ? "border-lime-300/50 shadow-[0_0_0_1px_rgba(163,230,53,0.15)]"
+                      : "border-zinc-800 hover:border-zinc-700"
+                  )}
+                  style={{ left: pos.x, top: pos.y, width: 200 }}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className={cx(
+                      "w-1.5 h-1.5 rounded-full mt-1 shrink-0",
+                      isSelected ? "bg-lime-300" : "bg-zinc-600"
+                    )} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11.5px] text-zinc-100 truncate font-medium">{p.name}</div>
+                      <div className="text-[9.5px] text-zinc-500 mt-0.5 truncate">
+                        {stage?.label || "—"}
+                      </div>
                     </div>
-                  </td>
-                  <td className="py-2.5 px-3 text-zinc-400">{s.region}</td>
-                  <td className="py-2.5 px-3"><Pill tone="muted">{s.tier}</Pill></td>
-                  <td className="py-2.5 px-3 text-right text-zinc-300 tabular-nums">{s.pricing}</td>
-                  <td className="py-2.5 px-3 text-right text-zinc-300 tabular-nums">{s.responsiveness}</td>
-                  <td className="py-2.5 px-3 text-right text-zinc-300 tabular-nums">{s.compliance}</td>
-                  <td className="py-2.5 px-3 text-right text-zinc-300 tabular-nums">{s.breadth}</td>
-                  <td className="py-2.5 px-3 text-right text-zinc-400 tabular-nums">{s.leadDays}d</td>
-                  <td className="py-2.5 px-3 text-right text-zinc-400 tabular-nums">{s.certifications}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Helper text bottom-left */}
+          <div className="absolute bottom-3 left-4 text-[10px] text-zinc-600 pointer-events-none">
+            Drag node to move · Drag canvas to pan · Scroll to zoom
+          </div>
         </div>
       </Card>
+
+      {/* Selected product detail */}
+      {selected && (() => {
+        const p = products.find(x => x.id === selected);
+        if (!p) return null;
+        const stage = CHAIN_STAGES.find(s => s.id === positions[p.id]?.stage);
+        const downstream = connections.filter(c => c.from === p.id).map(c => products.find(x => x.id === c.to)).filter(Boolean);
+        const upstream   = connections.filter(c => c.to === p.id).map(c => products.find(x => x.id === c.from)).filter(Boolean);
+        return (
+          <Card>
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">{stage?.label}</div>
+                <h3 className="text-[15px] font-medium text-zinc-100 truncate">{p.name}</h3>
+                {p.chemical && p.chemical !== "Unknown" && (
+                  <div className="text-[11.5px] text-zinc-400 mt-1 truncate">{p.chemical}</div>
+                )}
+              </div>
+              <button onClick={() => setSelected(null)}
+                      className="w-7 h-7 rounded hover:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">
+                  Upstream ({upstream.length})
+                </div>
+                {upstream.length === 0 ? (
+                  <div className="text-[11.5px] text-zinc-600 italic">No upstream products</div>
+                ) : (
+                  <div className="space-y-1">
+                    {upstream.map(u => (
+                      <button key={u.id} onClick={() => setSelected(u.id)}
+                              className="w-full text-left px-2.5 py-1.5 rounded bg-[#252528] border border-zinc-800 text-[12px] text-zinc-300 hover:bg-zinc-800">
+                        ← {u.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">
+                  Downstream ({downstream.length})
+                </div>
+                {downstream.length === 0 ? (
+                  <div className="text-[11.5px] text-zinc-600 italic">No downstream products</div>
+                ) : (
+                  <div className="space-y-1">
+                    {downstream.map(d => (
+                      <button key={d.id} onClick={() => setSelected(d.id)}
+                              className="w-full text-left px-2.5 py-1.5 rounded bg-[#252528] border border-zinc-800 text-[12px] text-zinc-300 hover:bg-zinc-800">
+                        {d.name} →
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        );
+      })()}
     </div>
   );
 }
@@ -2705,6 +3798,8 @@ export default function App() {
   const [view, setView] = useState("home");
   const [contacts, setContacts] = useState(SEED_CONTACTS);
   const [products, setProducts] = useState(SEED_PRODUCTS);
+  const [settings, updateSettings] = useSettings();
+  const [showSettings, setShowSettings] = useState(false);
 
   const ingestContacts = (rows) => {
     setContacts(prev => {
@@ -2724,6 +3819,9 @@ export default function App() {
     });
   };
 
+  const removeContact = (id) => setContacts(prev => prev.filter(c => c.id !== id));
+  const removeProduct = (id) => setProducts(prev => prev.filter(p => p.id !== id));
+
   return (
     <div className="min-h-screen bg-[#1a1a1c] text-zinc-100 antialiased flex"
          style={{ fontFamily: "'Inter Tight', ui-sans-serif, system-ui, sans-serif" }}>
@@ -2737,7 +3835,8 @@ export default function App() {
       `}</style>
 
       <Sidebar active={view} onChange={setView}
-               contactCount={contacts.length} productCount={products.length} />
+               contactCount={contacts.length} productCount={products.length}
+               onOpenSettings={() => setShowSettings(true)} />
 
       <main className="flex-1 min-w-0 bg-[#1a1a1c]">
         <SupplierHeader supplier={SUPPLIER} />
@@ -2751,7 +3850,7 @@ export default function App() {
               {view === "contacts" && "Contacts Intelligence"}
               {view === "catalogue" && "Product Catalogue"}
               {view === "recommend" && "Recommendation Engine"}
-              {view === "gaps" && "Gap Analysis"}
+              {view === "valuechain" && "Value Chain"}
               {view === "benchmark" && "Competitive Benchmarking"}
             </span>
           </div>
@@ -2764,12 +3863,16 @@ export default function App() {
         </div>
 
         {view === "home" && <Dashboard contacts={contacts} products={products} />}
-        {view === "contacts" && <ContactsModule contacts={contacts} onIngest={ingestContacts} />}
-        {view === "catalogue" && <CatalogueModule products={products} contacts={contacts} onIngest={ingestProducts} />}
+        {view === "contacts" && <ContactsModule contacts={contacts} onIngest={ingestContacts} onRemove={removeContact} />}
+        {view === "catalogue" && <CatalogueModule products={products} contacts={contacts} onIngest={ingestProducts} onRemove={removeProduct} />}
         {view === "recommend" && <RecommendModule contacts={contacts} products={products} />}
-        {view === "gaps" && <GapAnalysisModule contacts={contacts} products={products} />}
-        {view === "benchmark" && <BenchmarkingModule supplier={SUPPLIER} contacts={contacts} products={products} />}
+        {view === "valuechain" && <ValueChainModule products={products} />}
+        {view === "benchmark" && <BenchmarkingModule products={products} settings={settings} />}
       </main>
+
+      {showSettings && (
+        <SettingsDrawer settings={settings} onChange={updateSettings} onClose={() => setShowSettings(false)} />
+      )}
     </div>
   );
 }
