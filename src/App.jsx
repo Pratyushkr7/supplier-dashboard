@@ -14,83 +14,698 @@ import {
 // SEED DATA  ────────────────────────────────────────────────────────────────
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// BASF KNOWLEDGE GRAPH (canonical curated data)
+// ---------------------------------------------------------------------------
+// Structure: Supplier → Segment → Chemical → Grade → Application → Chain stage
+// Compiled from BASF's publicly disclosed division structure and product
+// catalogues (basf.com, BASF Annual Report 2024). Demo-grade — covers the
+// major chemicals across all six operating divisions.
+//
+// Hierarchy:
+//   SUPPLIER (BASF SE)
+//     → SEGMENTS (6 operating divisions)
+//        → CHEMICALS (canonical name, e.g. "Acetone")
+//           → GRADES (specific products with trade names)
+//              → APPLICATIONS, value-chain stage
+
 const SUPPLIER = {
-  name: "Hexakron Specialty Chemicals",
-  code: "HXK-2841",
-  country: "Singapore",
-  region: "APAC",
+  name: "BASF SE",
+  code: "BASF-DE",
+  country: "Germany",
+  region: "Europe",
   tier: "Tier 1",
-  yearsActive: 12,
-  certifications: ["ISO 9001", "REACH", "RoHS", "ISO 14001"],
-  score: 82,
+  yearsActive: 159,
+  certifications: ["ISO 9001", "ISO 14001", "ISO 45001", "REACH", "Responsible Care", "ISCC PLUS"],
+  website: "basf.com",
+  description: "World's largest chemical producer; six operating divisions across petrochemicals, materials, industrial solutions, surface technologies, nutrition, agriculture.",
 };
 
-const BENCHMARKS = [
-  { label: "Pricing competitiveness", value: 75, peer: "Better than 75% of suppliers", state: "active" },
-  { label: "Specs alignment", value: 62, peer: "—", state: "partial" },
-  { label: "Compliance coverage", value: 88, peer: "Top quartile", state: "active" },
-  { label: "Responsiveness", value: 71, peer: "vs 24 similar suppliers", state: "active" },
+// Six operating divisions (post-2024 restructuring)
+const BUSINESS_SEGMENTS = [
+  {
+    id: "chemicals",
+    name: "Chemicals",
+    short: "Chem",
+    description: "Petrochemicals, intermediates, monomers — the foundation of BASF's Verbund production system.",
+    accent: "lime",
+    region: "Global",
+  },
+  {
+    id: "materials",
+    name: "Materials",
+    short: "Mat",
+    description: "Performance materials including engineering plastics, polyurethanes, and specialty foams.",
+    accent: "blue",
+    region: "Global",
+  },
+  {
+    id: "industrial",
+    name: "Industrial Solutions",
+    short: "IS",
+    description: "Performance chemicals and dispersions for paints, coatings, plastics, adhesives, and industrial applications.",
+    accent: "amber",
+    region: "Global",
+  },
+  {
+    id: "surface",
+    name: "Surface Technologies",
+    short: "ST",
+    description: "Catalysts, coatings, and battery materials including precious metal services.",
+    accent: "purple",
+    region: "Global",
+  },
+  {
+    id: "nutrition",
+    name: "Nutrition & Care",
+    short: "N&C",
+    description: "Care chemicals, aroma ingredients, vitamins, and personal care actives.",
+    accent: "rose",
+    region: "Global",
+  },
+  {
+    id: "agriculture",
+    name: "Agricultural Solutions",
+    short: "AS",
+    description: "Crop protection chemicals, seeds, and digital farming solutions.",
+    accent: "green",
+    region: "Global",
+  },
 ];
 
+// Canonical chemical list — chemical-first hierarchy (per spec).
+// Each chemical has nested grades. Grades are NOT shown by default.
+const CHEMICALS = [
+  // ============ CHEMICALS DIVISION (Petrochemicals + Intermediates + Monomers) ============
+  {
+    id: "ch-acetone",
+    name: "Acetone",
+    cas: "67-64-1",
+    formula: "C₃H₆O",
+    segment: "chemicals",
+    chainStage: "intermediate",
+    upstream: ["Phenol"],
+    downstream: ["Bisphenol A"],
+    applications: ["Solvents", "Pharmaceuticals", "Coatings", "Adhesives"],
+    description: "Key co-product from BASF's phenol/cumene production at Ludwigshafen and Antwerp. Major intermediate for MMA and BPA chains.",
+    grades: [
+      { code: "Acetone Pure", spec: "≥99.8% purity, technical grade", application: "Industrial solvent" },
+      { code: "Acetone Pharma", spec: "USP/EP grade, water ≤0.3%", application: "Pharmaceutical synthesis" },
+      { code: "Acetone Reagent", spec: "ACS reagent grade", application: "Laboratory & analytical" },
+    ],
+  },
+  {
+    id: "ch-phenol",
+    name: "Phenol",
+    cas: "108-95-2",
+    formula: "C₆H₆O",
+    segment: "chemicals",
+    chainStage: "intermediate",
+    upstream: [],
+    downstream: ["Bisphenol A", "Acetone"],
+    applications: ["Resins", "Plastics intermediates", "Pharmaceuticals"],
+    description: "BASF operates one of Europe's largest phenol facilities at Ludwigshafen via the cumene process.",
+    grades: [
+      { code: "Phenol Pure 99.99%", spec: "Crystalline, low water", application: "BPA production" },
+      { code: "Phenol Liquid Tech", spec: "Molten, ≥99.5%", application: "Phenolic resins" },
+    ],
+  },
+  {
+    id: "ch-bisphenol-a",
+    name: "Bisphenol A",
+    cas: "80-05-7",
+    formula: "C₁₅H₁₆O₂",
+    segment: "chemicals",
+    chainStage: "monomer",
+    upstream: ["Phenol", "Acetone"],
+    downstream: [],
+    applications: ["Polycarbonate", "Epoxy resins", "Engineering plastics"],
+    description: "BASF's BPA serves both internal polycarbonate-precursor needs and external epoxy resin customers globally.",
+    grades: [
+      { code: "BPA Standard", spec: "Flake form, ≥99.7%", application: "Polycarbonate, epoxy" },
+      { code: "BPA Optical", spec: "High-purity, ≥99.9%", application: "Optical-grade PC" },
+    ],
+  },
+  {
+    id: "ch-ethylene",
+    name: "Ethylene",
+    cas: "74-85-1",
+    formula: "C₂H₄",
+    segment: "chemicals",
+    chainStage: "feedstock",
+    upstream: [],
+    downstream: ["Ethylene Oxide"],
+    applications: ["Polyolefins", "Surfactants precursors", "PVC chain"],
+    description: "Core olefin from BASF's steam crackers at Ludwigshafen, Antwerp, Port Arthur. Basis of the Verbund integrated production network.",
+    grades: [
+      { code: "Polymer Grade Ethylene", spec: "≥99.95% purity", application: "PE / EO production" },
+    ],
+  },
+  {
+    id: "ch-propylene",
+    name: "Propylene",
+    cas: "115-07-1",
+    formula: "C₃H₆",
+    segment: "chemicals",
+    chainStage: "feedstock",
+    upstream: [],
+    downstream: ["Acrylic Acid"],
+    applications: ["Polyolefins", "Acrylates", "Glycol ethers"],
+    description: "Verbund-integrated propylene supplies BASF's propylene oxide, acrylates, and oxo-alcohols chains.",
+    grades: [
+      { code: "Polymer Grade Propylene", spec: "≥99.5% purity", application: "PP, PO production" },
+    ],
+  },
+  {
+    id: "ch-acrylic-acid",
+    name: "Acrylic Acid",
+    cas: "79-10-7",
+    formula: "C₃H₄O₂",
+    segment: "chemicals",
+    chainStage: "monomer",
+    upstream: ["Propylene"],
+    downstream: ["Butyl Acrylate", "Acrylic Dispersion", "Superabsorbent Polymer"],
+    applications: ["Acrylate esters", "Superabsorbents", "Dispersions"],
+    description: "BASF is among the largest global acrylic acid producers; integrated downstream into acrylate esters and superabsorbents.",
+    grades: [
+      { code: "Glacial Acrylic Acid", spec: "≥99.5%, MEHQ stabilized", application: "Ester synthesis" },
+      { code: "Crude Acrylic Acid", spec: "Technical grade", application: "Superabsorbent polymers" },
+    ],
+  },
+  {
+    id: "ch-butyl-acrylate",
+    name: "Butyl Acrylate",
+    cas: "141-32-2",
+    formula: "C₇H₁₂O₂",
+    segment: "chemicals",
+    chainStage: "monomer",
+    upstream: ["Acrylic Acid"],
+    downstream: ["Acrylic Dispersion"],
+    applications: ["Adhesives", "Architectural coatings", "Paper coatings"],
+    description: "Key acrylate monomer; BASF integrates this into its Acronal dispersion line.",
+    grades: [
+      { code: "Butyl Acrylate Standard", spec: "≥99.5%, MEHQ inhibited", application: "Polymerization" },
+    ],
+  },
+  {
+    id: "ch-ethylene-oxide",
+    name: "Ethylene Oxide",
+    cas: "75-21-8",
+    formula: "C₂H₄O",
+    segment: "chemicals",
+    chainStage: "intermediate",
+    upstream: ["Ethylene"],
+    downstream: ["Monoethylene Glycol", "Monoethanolamine", "Polyether Polyols"],
+    applications: ["Glycols", "Surfactants", "Personal care intermediates"],
+    description: "BASF's EO production feeds glycol and surfactant chains at Antwerp and Ludwigshafen.",
+    grades: [
+      { code: "Ethylene Oxide", spec: "≥99.9%, ultra-high purity", application: "Surfactant synthesis" },
+    ],
+  },
+  {
+    id: "ch-meg",
+    name: "Monoethylene Glycol",
+    cas: "107-21-1",
+    formula: "C₂H₆O₂",
+    segment: "chemicals",
+    chainStage: "intermediate",
+    upstream: ["Ethylene Oxide"],
+    downstream: [],
+    applications: ["PET resin", "Coolants", "Polyester fibers"],
+    description: "Major glycol output from BASF's Verbund EO complex.",
+    grades: [
+      { code: "MEG Fiber Grade", spec: "≥99.9%, low UV absorbance", application: "Polyester production" },
+      { code: "MEG Industrial", spec: "≥99.5%", application: "Antifreeze, deicers" },
+    ],
+  },
+  {
+    id: "ch-monoethanolamine",
+    name: "Monoethanolamine",
+    cas: "141-43-5",
+    formula: "C₂H₇NO",
+    segment: "chemicals",
+    chainStage: "intermediate",
+    upstream: ["Ethylene Oxide"],
+    downstream: [],
+    applications: ["Gas scrubbing", "Detergents", "Personal care"],
+    description: "BASF is a leading producer of ethanolamines (MEA/DEA/TEA) from its EO Verbund.",
+    grades: [
+      { code: "MEA Standard", spec: "≥99%, low color", application: "Industrial" },
+      { code: "MEA Low Color", spec: "≥99.5%, APHA <10", application: "Personal care" },
+    ],
+  },
+  {
+    id: "ch-dimethylamine",
+    name: "Dimethylamine",
+    cas: "124-40-3",
+    formula: "C₂H₇N",
+    segment: "chemicals",
+    chainStage: "intermediate",
+    upstream: [],
+    downstream: [],
+    applications: ["Cationic surfactants", "Solvents (DMF, DMAc)", "Agrochemicals"],
+    description: "Methylamines (MMA/DMA/TMA) are produced at Ludwigshafen and Geismar (Louisiana).",
+    grades: [
+      { code: "DMA Anhydrous", spec: "≥99.5%, water-free", application: "DMF, DMAc synthesis" },
+      { code: "DMA Aqueous 60%", spec: "60% w/w solution", application: "Quaternary surfactants" },
+    ],
+  },
+
+  // ============ MATERIALS DIVISION (Polyurethanes + Performance Plastics) ============
+  {
+    id: "ch-mdi",
+    name: "MDI",
+    cas: "101-68-8",
+    formula: "C₁₅H₁₀N₂O₂",
+    segment: "materials",
+    chainStage: "monomer",
+    upstream: [],
+    downstream: ["TPU", "Polyurethane Dispersion"],
+    applications: ["Rigid insulation foam", "Automotive composites", "Footwear"],
+    description: "Lupranat trade name; BASF is one of the top three global MDI producers (Geismar, Antwerp, Chongqing).",
+    grades: [
+      { code: "Lupranat M 20 S", spec: "Polymeric MDI, NCO 31.5%", application: "Rigid foam" },
+      { code: "Lupranat MM 103", spec: "Modified MDI, low viscosity", application: "Adhesives, coatings" },
+      { code: "Lupranat MI", spec: "Pure 4,4'-MDI", application: "Elastomers, fibers" },
+    ],
+  },
+  {
+    id: "ch-tdi",
+    name: "TDI",
+    cas: "584-84-9",
+    formula: "C₉H₆N₂O₂",
+    segment: "materials",
+    chainStage: "monomer",
+    upstream: [],
+    downstream: [],
+    applications: ["Flexible foam (mattresses, furniture)", "Coatings", "Sealants"],
+    description: "Lupranat T trade name; BASF Schwarzheide and Yeosu sites supply global flexible foam markets.",
+    grades: [
+      { code: "Lupranat T 80", spec: "80/20 isomer mix", application: "Flexible slabstock foam" },
+      { code: "Lupranat T 65", spec: "65/35 isomer mix", application: "Specialty foams" },
+    ],
+  },
+  {
+    id: "ch-polyols",
+    name: "Polyether Polyols",
+    cas: "9082-00-2",
+    formula: "Various",
+    segment: "materials",
+    chainStage: "polymer",
+    upstream: ["Ethylene Oxide"],
+    downstream: ["TPU", "Polyurethane Dispersion"],
+    applications: ["Flexible foam", "Rigid foam", "CASE applications"],
+    description: "Lupranol trade name family; broad polyol portfolio for PU systems.",
+    grades: [
+      { code: "Lupranol 2090", spec: "OH 28, MW 6000", application: "Flexible foam" },
+      { code: "Lupranol 2095", spec: "OH 35, glycerin-initiated", application: "HR foam" },
+      { code: "Lupranol 1100", spec: "OH 56, diol", application: "CASE elastomers" },
+    ],
+  },
+  {
+    id: "ch-pa6",
+    name: "Polyamide 6",
+    cas: "25038-54-4",
+    formula: "(C₆H₁₁NO)ₙ",
+    segment: "materials",
+    chainStage: "polymer",
+    upstream: [],
+    downstream: [],
+    applications: ["Automotive parts", "Electrical & electronics", "Fibers"],
+    description: "Ultramid B family; high-performance engineering thermoplastic for automotive and E&E.",
+    grades: [
+      { code: "Ultramid B3S", spec: "Unfilled PA6, injection molding", application: "General engineering" },
+      { code: "Ultramid B3WG6", spec: "30% glass fiber reinforced", application: "Structural automotive" },
+      { code: "Ultramid B3EG6", spec: "Heat-stabilized, 30% GF", application: "Under-the-hood" },
+    ],
+  },
+  {
+    id: "ch-pa66",
+    name: "Polyamide 6.6",
+    cas: "32131-17-2",
+    formula: "(C₁₂H₂₂N₂O₂)ₙ",
+    segment: "materials",
+    chainStage: "polymer",
+    upstream: [],
+    downstream: [],
+    applications: ["Automotive structural parts", "E&E connectors", "Industrial fibers"],
+    description: "Ultramid A family; higher heat resistance vs PA6 for demanding applications.",
+    grades: [
+      { code: "Ultramid A3K", spec: "Unfilled, injection grade", application: "General PA66" },
+      { code: "Ultramid A3WG7", spec: "35% glass fiber", application: "Structural parts" },
+    ],
+  },
+  {
+    id: "ch-pbt",
+    name: "Polybutylene Terephthalate",
+    cas: "26062-94-2",
+    formula: "(C₁₂H₁₂O₄)ₙ",
+    segment: "materials",
+    chainStage: "polymer",
+    upstream: [],
+    downstream: [],
+    applications: ["Connectors", "Sensors", "Automotive electrical"],
+    description: "Ultradur family; engineering thermoplastic for E&E applications.",
+    grades: [
+      { code: "Ultradur B 4520", spec: "Unfilled PBT", application: "General molding" },
+      { code: "Ultradur B 4300 G6", spec: "30% glass fiber", application: "Structural E&E" },
+    ],
+  },
+  {
+    id: "ch-tpu",
+    name: "TPU",
+    cas: "9009-54-5",
+    formula: "Various",
+    segment: "materials",
+    chainStage: "polymer",
+    upstream: ["MDI", "Polyether Polyols"],
+    downstream: [],
+    applications: ["Footwear", "Wire & cable jacketing", "Automotive interior"],
+    description: "Elastollan trade name; flexible high-performance TPU.",
+    grades: [
+      { code: "Elastollan C 85 A", spec: "Shore 85A, polyester-based", application: "Hoses, profiles" },
+      { code: "Elastollan 1185 A", spec: "Shore 85A, polyether-based", application: "Footwear midsoles" },
+      { code: "Elastollan 1195 A", spec: "Shore 95A, high-modulus", application: "Industrial parts" },
+    ],
+  },
+
+  // ============ INDUSTRIAL SOLUTIONS (Dispersions, Resins, Performance Chemicals) ============
+  {
+    id: "ch-acrylic-dispersion",
+    name: "Acrylic Dispersion",
+    cas: "9003-32-1",
+    formula: "(C₇H₁₂O₂)ₙ",
+    segment: "industrial",
+    chainStage: "polymer",
+    upstream: ["Butyl Acrylate", "Acrylic Acid"],
+    downstream: [],
+    applications: ["Decorative paints", "PSA adhesives", "Paper & packaging"],
+    description: "Acronal trade name; BASF's flagship architectural-coatings binder family.",
+    grades: [
+      { code: "Acronal 290 D", spec: "Pure acrylic, 50% solids", application: "Exterior paints" },
+      { code: "Acronal Eco 6270", spec: "Low-VOC, biocide-free", application: "Eco interior paints" },
+      { code: "Acronal V 215", spec: "Styrene-acrylic", application: "Interior latex" },
+    ],
+  },
+  {
+    id: "ch-styrene-acrylic",
+    name: "Styrene-Acrylic Dispersion",
+    cas: "25767-47-9",
+    formula: "Copolymer",
+    segment: "industrial",
+    chainStage: "polymer",
+    upstream: ["Butyl Acrylate"],
+    downstream: [],
+    applications: ["Paper coatings", "Carpet backings", "Construction"],
+    description: "Styrofan trade name; styrene-acrylic dispersions for paper and construction.",
+    grades: [
+      { code: "Styrofan D 615", spec: "50% solids, paper coating", application: "Paper coatings" },
+      { code: "Styrofan 2D", spec: "Carpet binder", application: "Textile flooring" },
+    ],
+  },
+  {
+    id: "ch-pu-dispersion",
+    name: "Polyurethane Dispersion",
+    cas: "9009-54-5",
+    formula: "Aqueous PUD",
+    segment: "industrial",
+    chainStage: "polymer",
+    upstream: ["MDI", "Polyether Polyols"],
+    downstream: [],
+    applications: ["Wood coatings", "Leather", "Textile finishing"],
+    description: "Astacin trade name; waterborne PU dispersions for high-end coatings.",
+    grades: [
+      { code: "Astacin Finish PUMN", spec: "Aliphatic PUD, 35% solids", application: "Leather finishing" },
+      { code: "Astacin Novomatt UV", spec: "UV-resistant matte PUD", application: "Wood floor finishes" },
+    ],
+  },
+  {
+    id: "ch-superabsorbent",
+    name: "Superabsorbent Polymer",
+    cas: "9003-04-7",
+    formula: "Crosslinked sodium polyacrylate",
+    segment: "industrial",
+    chainStage: "polymer",
+    upstream: ["Acrylic Acid"],
+    downstream: [],
+    applications: ["Hygiene products", "Adult incontinence", "Agriculture"],
+    description: "Hysorb trade name; SAP for diapers and hygiene markets.",
+    grades: [
+      { code: "Hysorb 8800", spec: "High permeability SAP", application: "Premium baby diapers" },
+      { code: "Hysorb T 8760", spec: "Adult incontinence grade", application: "Adult hygiene" },
+    ],
+  },
+  {
+    id: "ch-construction-additives",
+    name: "Construction Polymer Additives",
+    cas: "Various",
+    formula: "Polymer powders",
+    segment: "industrial",
+    chainStage: "additive",
+    upstream: [],
+    downstream: [],
+    applications: ["Tile adhesive", "Cement-based mortars", "Wall plasters"],
+    description: "Acronal S — redispersible polymer powders for construction.",
+    grades: [
+      { code: "Acronal S 559", spec: "Redispersible powder", application: "Tile adhesives" },
+      { code: "Acronal S 790", spec: "All-rounder powder", application: "Self-leveling mortars" },
+    ],
+  },
+
+  // ============ SURFACE TECHNOLOGIES (Catalysts, Coatings, Battery materials) ============
+  {
+    id: "ch-auto-catalysts",
+    name: "Automotive Catalysts",
+    cas: "Various",
+    formula: "Pt/Pd/Rh on ceramic",
+    segment: "surface",
+    chainStage: "finished",
+    upstream: [],
+    downstream: [],
+    applications: ["Gasoline TWC", "Diesel DOC/SCR", "Heavy-duty emissions"],
+    description: "Three-way catalysts and emission systems; major share of European OEM business.",
+    grades: [
+      { code: "Premair", spec: "Three-way gasoline TWC", application: "Light-duty gasoline" },
+      { code: "DeNOx SCR", spec: "Diesel SCR catalyst", application: "Diesel emission control" },
+    ],
+  },
+  {
+    id: "ch-cathode-materials",
+    name: "Cathode Active Materials",
+    cas: "Various",
+    formula: "NMC / NCA",
+    segment: "surface",
+    chainStage: "finished",
+    upstream: [],
+    downstream: [],
+    applications: ["EV batteries", "Stationary energy storage"],
+    description: "Battery materials division — NMC/NCA cathode materials for EV cell makers.",
+    grades: [
+      { code: "HED NCM 622", spec: "NMC 6:2:2 ratio", application: "Mid-range EV" },
+      { code: "HED NCM 811", spec: "High-nickel NCM", application: "Premium long-range EV" },
+    ],
+  },
+  {
+    id: "ch-coatings",
+    name: "Automotive OEM Coatings",
+    cas: "Various",
+    formula: "Multi-component systems",
+    segment: "surface",
+    chainStage: "finished",
+    upstream: [],
+    downstream: [],
+    applications: ["OEM automotive finishing", "Refinish"],
+    description: "Glasurit (refinish), iGloss (OEM clear coat), Cathoguard (e-coat) brands.",
+    grades: [
+      { code: "Cathoguard 800", spec: "Cathodic e-coat primer", application: "OEM body coating" },
+      { code: "iGloss", spec: "Premium clear coat", application: "OEM topcoat" },
+    ],
+  },
+
+  // ============ NUTRITION & CARE ============
+  {
+    id: "ch-vitamin-e",
+    name: "Vitamin E",
+    cas: "59-02-9",
+    formula: "C₂₉H₅₀O₂",
+    segment: "nutrition",
+    chainStage: "finished",
+    upstream: [],
+    downstream: [],
+    applications: ["Animal nutrition", "Human nutrition", "Cosmetic actives"],
+    description: "BASF is one of two global leaders in synthetic vitamin E production (Ludwigshafen).",
+    grades: [
+      { code: "Lutavit E 50", spec: "50% adsorbate, feed grade", application: "Animal feed" },
+      { code: "Vitamin E Acetate USP", spec: "Pharmaceutical grade", application: "Pharma & food" },
+    ],
+  },
+  {
+    id: "ch-uv-filters",
+    name: "UV Filters",
+    cas: "Various",
+    formula: "Organic UV absorbers",
+    segment: "nutrition",
+    chainStage: "additive",
+    upstream: [],
+    downstream: [],
+    applications: ["Sun care products", "Daily SPF moisturizers"],
+    description: "Tinosorb / Uvinul UV filter portfolio for sun care.",
+    grades: [
+      { code: "Tinosorb S", spec: "Bemotrizinol UV filter", application: "Premium sunscreen" },
+      { code: "Uvinul A Plus", spec: "DHHB UVA filter", application: "Anti-aging SPF" },
+    ],
+  },
+  {
+    id: "ch-personal-care-emollients",
+    name: "Care Emollients",
+    cas: "Various",
+    formula: "Esters / fatty alcohols",
+    segment: "nutrition",
+    chainStage: "additive",
+    upstream: [],
+    downstream: [],
+    applications: ["Skin care", "Hair care", "Color cosmetics"],
+    description: "Cegesoft / Cetiol emollient family; BASF Care Creations portfolio.",
+    grades: [
+      { code: "Cetiol CC", spec: "Coco-caprylate, light feel", application: "Facial moisturizers" },
+      { code: "Cegesoft VP", spec: "Vegetable polysoft, plant-based", application: "Natural cosmetics" },
+    ],
+  },
+
+  // ============ AGRICULTURAL SOLUTIONS ============
+  {
+    id: "ch-glufosinate",
+    name: "Glufosinate-ammonium",
+    cas: "77182-82-2",
+    formula: "C₅H₁₅N₂O₄P",
+    segment: "agriculture",
+    chainStage: "finished",
+    upstream: [],
+    downstream: [],
+    applications: ["Non-selective herbicide", "GMO-tolerant crop systems"],
+    description: "Liberty / Basta herbicide active ingredient. Major agrochemical AI from the 2018 Bayer divestiture.",
+    grades: [
+      { code: "Liberty 280 SL", spec: "280 g/L formulation", application: "Liberty Link soybean/corn" },
+    ],
+  },
+  {
+    id: "ch-fungicides",
+    name: "Strobilurin Fungicides",
+    cas: "175013-18-0",
+    formula: "C₁₈H₁₉NO₄",
+    segment: "agriculture",
+    chainStage: "finished",
+    upstream: [],
+    downstream: [],
+    applications: ["Cereal fungicide", "Specialty crops"],
+    description: "Pyraclostrobin (Headline brand); strobilurin class fungicide.",
+    grades: [
+      { code: "Headline EC", spec: "250 g/L pyraclostrobin", application: "Cereal disease control" },
+      { code: "Cabrio Top", spec: "Pyraclostrobin + metiram", application: "Vineyard, fruit" },
+    ],
+  },
+];
+
+// Quick-access maps derived from the canonical list
+const CHEMICALS_BY_ID = Object.fromEntries(CHEMICALS.map(c => [c.id, c]));
+const CHEMICALS_BY_SEGMENT = BUSINESS_SEGMENTS.reduce((acc, seg) => {
+  acc[seg.id] = CHEMICALS.filter(c => c.segment === seg.id);
+  return acc;
+}, {});
+
+// Synthesised KPI panels — these read like real ops data but are demo seed.
+// Reframed for BASF Verbund scale.
 const QUOTES = [
-  { sku: "HXK-SLV-204", product: "Ethyl Acetate 99.5%", price: "$1,240/MT", delta: -8, status: "Won" },
-  { sku: "HXK-CTG-118", product: "Acrylic Resin AR-118", price: "$3,810/MT", delta: 12, status: "Negotiation" },
-  { sku: "HXK-SLV-091", product: "MEK Industrial Grade", price: "$1,640/MT", delta: -3, status: "Pending" },
-  { sku: "HXK-ADD-432", product: "Defoamer DF-432", price: "$5,290/MT", delta: 4, status: "Pending" },
-  { sku: "HXK-CTG-119", product: "Polyurethane Dispersion", price: "$4,120/MT", delta: -6, status: "Won" },
-  { sku: "HXK-SLV-061", product: "Toluene Reagent", price: "$980/MT", delta: 18, status: "Lost" },
+  { sku: "BASF-IS-2901", product: "Acronal 290 D", price: "€1,840/MT", delta: -4, status: "Won" },
+  { sku: "BASF-MAT-118",  product: "Lupranat M 20 S", price: "€2,310/MT", delta: 6, status: "Negotiation" },
+  { sku: "BASF-CHEM-091", product: "Acetone Pure", price: "€890/MT", delta: -2, status: "Pending" },
+  { sku: "BASF-MAT-432",  product: "Ultramid B3WG6", price: "€3,640/MT", delta: 3, status: "Pending" },
+  { sku: "BASF-IS-119",   product: "Astacin Finish PUMN", price: "€4,120/MT", delta: -7, status: "Won" },
+  { sku: "BASF-CHEM-061", product: "Phenol 99.99%", price: "€1,210/MT", delta: 9, status: "Lost" },
+];
+
+const BENCHMARKS = [
+  { label: "Pricing competitiveness", value: 68, peer: "vs Dow, Covestro, INEOS, Lyondell", state: "active" },
+  { label: "Verbund integration",      value: 96, peer: "Top quartile globally",            state: "active" },
+  { label: "Compliance coverage",      value: 94, peer: "Top decile",                       state: "active" },
+  { label: "R&D intensity",            value: 78, peer: "vs major peers",                   state: "active" },
 ];
 
 const COMPLETENESS_SUGGESTIONS = [
-  "Add technical contacts in EU",
-  "Upload missing TDS for AR-118",
-  "Verify ISO 14001 certificate",
+  "Add APAC technical contacts for Materials division",
+  "Update 2024 sustainability disclosures",
+  "Re-confirm ISCC PLUS scope for Verbund products",
 ];
 
 const INCOTERMS = [
-  { code: "CPT", value: 38 },
-  { code: "FOB", value: 27 },
-  { code: "CIF", value: 19 },
-  { code: "EXW", value: 11 },
-  { code: "DAP", value: 5 },
+  { code: "FCA", value: 34 },
+  { code: "CPT", value: 28 },
+  { code: "FOB", value: 18 },
+  { code: "CIF", value: 12 },
+  { code: "DAP", value: 8 },
 ];
 
 const REGIONS = [
-  { name: "APAC", value: 54, accent: true },
-  { name: "Europe", value: 22 },
-  { name: "MEA", value: 14 },
-  { name: "Americas", value: 10 },
+  { name: "Europe",   value: 41, accent: true },
+  { name: "Americas", value: 26 },
+  { name: "APAC",     value: 27 },
+  { name: "MEA",      value: 6 },
 ];
 
 const AI_INSIGHTS = [
-  { tag: "Pricing", text: "Strong pricing in APAC solvents", tone: "good" },
-  { tag: "Coverage", text: "Low technical contact coverage in EU", tone: "warn" },
-  { tag: "Catalogue", text: "Missing 3 high-demand coating SKUs", tone: "warn" },
-  { tag: "Activity", text: "RFQ win rate up 14% this quarter", tone: "good" },
-  { tag: "Risk", text: "TDS expired on 2 reagent grades", tone: "bad" },
+  { tag: "Verbund",    text: "Strong Verbund integration drives cost advantage in solvents", tone: "good" },
+  { tag: "Capacity",   text: "MDI capacity expansion at Geismar coming online Q3",           tone: "good" },
+  { tag: "Risk",       text: "Energy cost pressure in European production",                    tone: "warn" },
+  { tag: "Portfolio",  text: "Battery materials growing 30%+ YoY in Surface Technologies",     tone: "good" },
+  { tag: "Compliance", text: "ISCC PLUS certified across 25+ Verbund products",                tone: "good" },
 ];
 
 const NEXT_ACTIONS = [
-  { text: "Add coatings contact – EU", priority: "High" },
-  { text: "Update pricing for top 5 SKUs", priority: "Medium" },
-  { text: "Re-confirm CIF terms for MEA", priority: "Low" },
+  { text: "Lock 2025 Acronal contracts for Q1",       priority: "High" },
+  { text: "Compare MDI pricing vs Covestro",          priority: "Medium" },
+  { text: "Evaluate Hysorb SAP for new diaper line",  priority: "Low" },
 ];
 
 const SEED_CONTACTS = [
-  { id: "c-1", name: "Wei Chen Lim", role: "Sales", email: "wei.lim@hexakron.sg", region: "APAC", tags: ["Primary Contact", "Decision Maker"], phone: "+65 6789 4521", source: "—" },
-  { id: "c-2", name: "Anika Raghavan", role: "Technical", email: "a.raghavan@hexakron.sg", region: "APAC", tags: ["Decision Maker"], phone: "+65 6789 4533", source: "—" },
-  { id: "c-3", name: "Marcus Holzer", role: "Sales", email: "m.holzer@hexakron-eu.de", region: "Europe", tags: ["Primary Contact"], phone: "+49 211 884 2210", source: "—" },
-  { id: "c-4", name: "Priya Subramaniam", role: "Procurement", email: "priya.s@hexakron.sg", region: "APAC", tags: [], phone: "+65 6789 4502", source: "—" },
-  { id: "c-5", name: "Hassan Al-Mutairi", role: "Sales", email: "h.almutairi@hexakron-mea.ae", region: "MEA", tags: ["Decision Maker"], phone: "+971 4 322 5511", source: "—" },
+  { id: "c-1", name: "Dr. Martin Brudermüller", role: "Management",  email: "ceo.office@basf.com",         region: "Europe",   tags: ["Decision Maker"], phone: "+49 621 60 0",      source: "—" },
+  { id: "c-2", name: "Anna Schäfer",            role: "Sales",       email: "anna.schaefer@basf.com",      region: "Europe",   tags: ["Primary Contact"], phone: "+49 621 60 4521",  source: "—" },
+  { id: "c-3", name: "Hiroshi Tanaka",          role: "Sales",       email: "hiroshi.tanaka@basf.com",     region: "APAC",     tags: ["Primary Contact", "Decision Maker"], phone: "+81 3 5290 3000", source: "—" },
+  { id: "c-4", name: "Dr. Elena Rossi",         role: "Technical",   email: "elena.rossi@basf.com",        region: "Europe",   tags: ["Decision Maker"], phone: "+49 621 60 4533",   source: "—" },
+  { id: "c-5", name: "Carlos Mendoza",          role: "Sales",       email: "carlos.mendoza@basf.com",     region: "Americas", tags: ["Primary Contact"], phone: "+1 973 245 6000",   source: "—" },
 ];
 
-const SEED_PRODUCTS = [
-  { id: "p-1", name: "Ethyl Acetate 99.5%", chemical: "Ethyl acetate", category: "Solvents", application: "Coatings, Inks", grade: "Industrial", cas: "141-78-6", industry: ["Paints", "Adhesives"], demand: "high", top: true, source: "—" },
-  { id: "p-2", name: "Acrylic Resin AR-118", chemical: "Polyacrylate copolymer", category: "Resins", application: "Architectural Coatings", grade: "Premium", cas: "9003-01-4", industry: ["Construction"], demand: "high", top: true, source: "—" },
-  { id: "p-3", name: "MEK Industrial Grade", chemical: "Methyl ethyl ketone", category: "Solvents", application: "Cleaning, Coatings", grade: "Industrial", cas: "78-93-3", industry: ["Manufacturing"], demand: "medium", source: "—" },
-  { id: "p-4", name: "Defoamer DF-432", chemical: "Polysiloxane defoamer", category: "Additives", application: "Process aid", grade: "Specialty", cas: "Unknown", industry: ["Water treatment"], demand: "medium", source: "—" },
-  { id: "p-5", name: "Polyurethane Dispersion", chemical: "Aqueous polyurethane dispersion", category: "Resins", application: "Wood, Leather", grade: "Premium", cas: "Unknown", industry: ["Coatings"], demand: "high", top: true, source: "—" },
-];
+// Map BASF segment id → existing category enum used by the rest of the app
+// (so legacy filters like "Solvents/Resins/Amines" still work)
+const SEGMENT_TO_CATEGORY = {
+  chemicals:   "Reagents",
+  materials:   "Polymers",
+  industrial:  "Resins",
+  surface:     "Additives",
+  nutrition:   "Additives",
+  agriculture: "Reagents",
+};
+
+// Build SEED_PRODUCTS dynamically from the BASF chemical+grade hierarchy.
+// One row per (chemical, grade) so they show in tables and Value Chain.
+const SEED_PRODUCTS = CHEMICALS.flatMap(ch =>
+  ch.grades.map((g, idx) => ({
+    id: `${ch.id}-g${idx}`,
+    chemicalId:  ch.id,
+    name:        g.code,
+    chemical:    ch.name,
+    category:    SEGMENT_TO_CATEGORY[ch.segment] || "Unknown",
+    segment:     ch.segment,
+    application: g.application || ch.applications?.[0] || "Unknown",
+    grade:       g.spec || "Standard",
+    cas:         ch.cas !== "Various" ? ch.cas : "Unknown",
+    chainStage:  ch.chainStage,
+    industry:    ch.applications || [],
+    demand:      idx === 0 ? "high" : "medium",
+    top:         idx === 0,
+    source:      "—",
+  }))
+);
+
 
 // ---------------------------------------------------------------------------
 // DOCUMENT PARSER v3 — column-aware, type-aware, junk-filtered
@@ -940,7 +1555,7 @@ function Sidebar({ active, onChange, productCount, contactCount, onOpenSettings 
     { id: "home", label: "Dashboard", icon: Home },
     { id: "contacts", label: "Contacts", icon: Users, badge: contactCount },
     { id: "catalogue", label: "Catalogue", icon: Package, badge: productCount },
-    { id: "recommend", label: "Recommend", icon: Sparkles },
+    { id: "segments", label: "Segments", icon: Database },
     { id: "valuechain", label: "Value Chain", icon: Workflow },
     { id: "benchmark", label: "Benchmarking", icon: Activity },
   ];
@@ -1109,7 +1724,7 @@ function SupplierHeader({ supplier }) {
 
         <div className="flex items-end justify-between gap-6 flex-wrap">
           <div className="flex items-center gap-5">
-            <div className="w-14 h-14 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-100 font-medium text-xl">H</div>
+            <div className="w-14 h-14 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-100 font-medium text-xl">{supplier.name?.charAt(0) || "?"}</div>
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-[24px] font-medium text-zinc-50 tracking-tight">{supplier.name}</h1>
@@ -1140,7 +1755,7 @@ function SupplierHeader({ supplier }) {
 // DASHBOARD
 // ---------------------------------------------------------------------------
 
-function Dashboard({ contacts, products }) {
+function Dashboard({ contacts, products, onSelectChemical }) {
   const completeness = useMemo(() => {
     const parts = [
       { label: "Company info", value: 95 },
@@ -2014,13 +2629,13 @@ function ManualContactForm({ onSubmit, onCancel }) {
 // CATALOGUE MODULE
 // ---------------------------------------------------------------------------
 
-function CatalogueModule({ products, contacts, onIngest, onRemove }) {
-  const [catFilter, setCatFilter] = useState("All");
-  const [demandFilter, setDemandFilter] = useState("All");
+function CatalogueModule({ products, contacts, onIngest, onRemove, onSelectChemical }) {
+  const [segmentFilter, setSegmentFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [drawer, setDrawer] = useState(null);
   const [linkProduct, setLinkProduct] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [expandedChemicals, setExpandedChemicals] = useState(new Set());
 
   const handleFile = async (file) => {
     const ext = file.name.toLowerCase().split(".").pop();
@@ -2070,25 +2685,64 @@ function CatalogueModule({ products, contacts, onIngest, onRemove }) {
     setShowAddForm(false);
   };
 
-  const filtered = useMemo(() => products.filter(p =>
-    (catFilter === "All" || p.category === catFilter) &&
-    (demandFilter === "All" || p.demand === demandFilter.toLowerCase()) &&
-    (search === "" || (p.name + p.application + p.cas).toLowerCase().includes(search.toLowerCase()))
-  ), [products, catFilter, demandFilter, search]);
+  // Group products by chemical (canonical hierarchy: chemical → grades).
+  // We prefer the chemicalId from BASF graph if present; otherwise fall back to chemical name.
+  const grouped = useMemo(() => {
+    const map = new Map();
+    for (const p of products) {
+      const key = p.chemicalId || p.chemical || p.name;
+      if (!map.has(key)) {
+        const ref = p.chemicalId ? CHEMICALS_BY_ID[p.chemicalId] : null;
+        map.set(key, {
+          key,
+          chemicalId: p.chemicalId,
+          name: ref?.name || p.chemical || p.name,
+          cas: ref?.cas || (p.cas !== "Unknown" ? p.cas : null),
+          formula: ref?.formula,
+          segment: ref?.segment || p.segment,
+          chainStage: ref?.chainStage || p.chainStage,
+          applications: ref?.applications,
+          grades: [],
+        });
+      }
+      map.get(key).grades.push(p);
+    }
+    return [...map.values()];
+  }, [products]);
+
+  // Filter the grouped list
+  const filteredGroups = useMemo(() => grouped.filter(g => {
+    if (segmentFilter !== "All" && g.segment !== segmentFilter) return false;
+    if (search) {
+      const haystack = `${g.name} ${g.cas || ""} ${(g.applications || []).join(" ")} ${g.grades.map(gr => gr.name).join(" ")}`.toLowerCase();
+      if (!haystack.includes(search.toLowerCase())) return false;
+    }
+    return true;
+  }), [grouped, segmentFilter, search]);
+
+  const toggleChemical = (key) => {
+    setExpandedChemicals(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   const stats = {
-    total: products.length,
-    top: products.filter(p => p.top).length,
-    high: products.filter(p => p.demand === "high").length,
-    cats: new Set(products.map(p => p.category)).size,
+    chemicals: grouped.length,
+    grades: products.length,
+    segments: new Set(grouped.map(g => g.segment).filter(Boolean)).size,
   };
+
+  const segmentOptions = ["All", ...BUSINESS_SEGMENTS.map(s => s.id)];
+  const segmentLabel = (id) => id === "All" ? "All" : BUSINESS_SEGMENTS.find(s => s.id === id)?.name || id;
 
   return (
     <div className="p-8 space-y-5">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Product Catalogue</h2>
-          <p className="text-[12px] text-zinc-500 mt-1">Upload supplier catalogues — review parsed SKUs before saving</p>
+          <p className="text-[12px] text-zinc-500 mt-1">Chemicals only at top level — click any chemical to expand grades</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowAddForm(true)}
@@ -2099,12 +2753,11 @@ function CatalogueModule({ products, contacts, onIngest, onRemove }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[
-          { label: "Total SKUs", value: stats.total, icon: Package },
-          { label: "Top products", value: stats.top, icon: Star },
-          { label: "High demand", value: stats.high, icon: TrendingUp },
-          { label: "Categories", value: stats.cats, icon: Database },
+          { label: "Chemicals", value: stats.chemicals, icon: Beaker },
+          { label: "Total grades", value: stats.grades, icon: Package },
+          { label: "Business segments", value: stats.segments, icon: Database },
         ].map((s, i) => (
           <Card key={i} className="!p-4">
             <div className="flex items-center justify-between">
@@ -2123,79 +2776,126 @@ function CatalogueModule({ products, contacts, onIngest, onRemove }) {
           <div className="flex items-center gap-2 px-3 py-1.5 bg-[#252528] rounded-lg border border-zinc-800 flex-1 min-w-[200px]">
             <Search className="w-3.5 h-3.5 text-zinc-500" />
             <input value={search} onChange={e => setSearch(e.target.value)}
-                   placeholder="Search product, application or CAS…"
+                   placeholder="Search chemical, CAS, application, or grade…"
                    className="bg-transparent border-0 outline-none text-[13px] text-zinc-200 placeholder:text-zinc-500 flex-1" />
           </div>
-          <FilterChip label="Category" value={catFilter}
-                      options={["All", "Solvents", "Resins", "Additives", "Pigments"]}
-                      onChange={setCatFilter} />
-          <FilterChip label="Demand" value={demandFilter}
-                      options={["All", "High", "Medium", "Low"]}
-                      onChange={setDemandFilter} />
+          <FilterChip label="Segment" value={segmentLabel(segmentFilter)}
+                      options={segmentOptions.map(segmentLabel)}
+                      onChange={(v) => {
+                        const found = segmentOptions.find(o => segmentLabel(o) === v);
+                        setSegmentFilter(found || "All");
+                      }} />
+          {expandedChemicals.size > 0 && (
+            <button onClick={() => setExpandedChemicals(new Set())}
+                    className="text-[11px] text-zinc-400 hover:text-zinc-200 px-2 py-1 rounded hover:bg-zinc-800">
+              Collapse all
+            </button>
+          )}
         </div>
       </Card>
 
       <Card className="!p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-[13px]">
-            <thead className="bg-[#1c1c1e] border-b border-zinc-800">
-              <tr className="text-[10px] uppercase tracking-widest text-zinc-500">
-                <th className="text-left px-5 py-3 font-normal">Product</th>
-                <th className="text-left px-5 py-3 font-normal">Chemical</th>
-                <th className="text-left px-5 py-3 font-normal">Category</th>
-                <th className="text-left px-5 py-3 font-normal">Application</th>
-                <th className="text-left px-5 py-3 font-normal">Grade</th>
-                <th className="text-left px-5 py-3 font-normal">CAS</th>
-                <th className="text-left px-5 py-3 font-normal">Source</th>
-                <th className="text-right px-5 py-3 font-normal w-20">Linked</th>
-                <th className="text-right px-3 py-3 font-normal w-12"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800">
-              {filtered.map(p => (
-                <tr key={p.id} className={cx("hover:bg-zinc-800/30 transition-colors group",
-                                              p.justAdded && "bg-lime-300/[0.04]")}>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      {p.justAdded && <div className="w-1 h-1 rounded-full bg-lime-300" />}
-                      {p.top && <Star className="w-3 h-3 text-lime-300 fill-lime-300" />}
-                      <span className="text-zinc-100">{p.name}</span>
+        {filteredGroups.length === 0 ? (
+          <div className="py-12 text-center text-zinc-500 text-[12px]">No chemicals match your filters</div>
+        ) : (
+          <div className="divide-y divide-zinc-800">
+            {filteredGroups.map(g => {
+              const isExpanded = expandedChemicals.has(g.key);
+              const segmentInfo = g.segment ? BUSINESS_SEGMENTS.find(s => s.id === g.segment) : null;
+              return (
+                <div key={g.key} className="group">
+                  {/* Chemical header row (always visible) */}
+                  <button
+                    onClick={() => toggleChemical(g.key)}
+                    className={cx(
+                      "w-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors",
+                      isExpanded ? "bg-lime-300/[0.03] hover:bg-lime-300/[0.05]" : "hover:bg-zinc-800/30"
+                    )}>
+                    <ChevronRight className={cx(
+                      "w-3.5 h-3.5 text-zinc-500 transition-transform shrink-0",
+                      isExpanded && "rotate-90 text-lime-300"
+                    )} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className={cx("text-[14px] font-medium",
+                          isExpanded ? "text-zinc-50" : "text-zinc-100")}>{g.name}</span>
+                        {g.cas && <span className="text-[11px] tabular-nums text-zinc-500">{g.cas}</span>}
+                        {g.formula && <span className="text-[11px] text-zinc-500">{g.formula}</span>}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {segmentInfo && <Pill tone="muted">{segmentInfo.name}</Pill>}
+                        {g.chainStage && <Pill tone="muted">{g.chainStage}</Pill>}
+                        <span className="text-[10.5px] text-zinc-500 tabular-nums">
+                          {g.grades.length} grade{g.grades.length === 1 ? "" : "s"}
+                        </span>
+                      </div>
                     </div>
-                  </td>
-                  <td className={cx("px-5 py-3 text-[12px] max-w-[220px] truncate",
-                                     p.chemical === "Unknown" || !p.chemical ? "text-zinc-600 italic" : "text-zinc-300")}
-                      title={p.chemical}>{p.chemical || "Unknown"}</td>
-                  <td className="px-5 py-3 text-zinc-300">{p.category}</td>
-                  <td className="px-5 py-3 text-zinc-400">{p.application}</td>
-                  <td className="px-5 py-3"><Pill tone="muted">{p.grade}</Pill></td>
-                  <td className={cx("px-5 py-3 text-[11.5px] tabular-nums",
-                                     p.cas === "Unknown" ? "text-zinc-600 italic" : "text-zinc-400")}>{p.cas}</td>
-                  <td className="px-5 py-3 text-[11px] text-zinc-500 max-w-[160px]">
-                    {p.source === "—"
-                      ? <span className="text-zinc-600">—</span>
-                      : <span className="flex items-center gap-1.5"><FileText className="w-3 h-3 shrink-0" /><span className="truncate">{p.source}</span></span>}
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <button onClick={() => setLinkProduct(p)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700">
-                      <Link2 className="w-3 h-3 text-lime-300" />View
-                    </button>
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    <button onClick={() => onRemove?.(p.id)}
-                            title="Remove product"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded hover:bg-rose-500/10 hover:text-rose-300 text-zinc-500 inline-flex items-center justify-center">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={10} className="text-center py-12 text-zinc-500 text-[12px]">No products match your filters</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    <div className="shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {onSelectChemical && (
+                        <span onClick={(e) => { e.stopPropagation(); onSelectChemical(g); }}
+                              className="text-[11px] text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 hover:bg-zinc-700 inline-flex items-center gap-1 cursor-pointer">
+                          <Info className="w-3 h-3 text-lime-300" />Inspect
+                        </span>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Expanded grade rows */}
+                  {isExpanded && (
+                    <div className="bg-[#161618] border-t border-zinc-800/60">
+                      <table className="w-full text-[12.5px]">
+                        <thead>
+                          <tr className="text-[10px] uppercase tracking-widest text-zinc-600 bg-[#1a1a1c]">
+                            <th className="text-left pl-12 pr-3 py-2 font-normal">Grade</th>
+                            <th className="text-left px-3 py-2 font-normal">Specifications</th>
+                            <th className="text-left px-3 py-2 font-normal">Application</th>
+                            <th className="text-left px-3 py-2 font-normal">Source</th>
+                            <th className="text-right px-3 py-2 font-normal w-20"></th>
+                            <th className="text-right px-3 py-2 font-normal w-10"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {g.grades.map(p => (
+                            <tr key={p.id} className={cx("hover:bg-zinc-800/30 transition-colors group/row",
+                                                            p.justAdded && "bg-lime-300/[0.04]")}>
+                              <td className="pl-12 pr-3 py-2.5">
+                                <div className="flex items-center gap-2">
+                                  {p.justAdded && <div className="w-1 h-1 rounded-full bg-lime-300" />}
+                                  {p.top && <Star className="w-3 h-3 text-lime-300 fill-lime-300" />}
+                                  <span className="text-zinc-200">{p.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2.5 text-zinc-400 text-[11.5px]">{p.grade}</td>
+                              <td className="px-3 py-2.5 text-zinc-400">{p.application}</td>
+                              <td className="px-3 py-2.5 text-[11px] text-zinc-500 max-w-[160px]">
+                                {p.source === "—"
+                                  ? <span className="text-zinc-600">—</span>
+                                  : <span className="flex items-center gap-1.5"><FileText className="w-3 h-3 shrink-0" /><span className="truncate">{p.source}</span></span>}
+                              </td>
+                              <td className="px-3 py-2.5 text-right">
+                                <button onClick={() => setLinkProduct(p)}
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700">
+                                  <Link2 className="w-3 h-3 text-lime-300" />Contacts
+                                </button>
+                              </td>
+                              <td className="px-3 py-2.5 text-right">
+                                <button onClick={() => onRemove?.(p.id)}
+                                        title="Remove grade"
+                                        className="opacity-0 group-hover/row:opacity-100 transition-opacity w-7 h-7 rounded hover:bg-rose-500/10 hover:text-rose-300 text-zinc-500 inline-flex items-center justify-center">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Card>
 
       <PreviewDrawer
@@ -3435,21 +4135,49 @@ function classifyChainStage(product) {
   return product.cas && product.cas !== "Unknown" ? "intermediate" : "additive";
 }
 
-// Auto-position products on canvas based on stage. Returns {[id]: {x, y}}.
-function autoPositionProducts(products) {
-  const stageMap = {};
+// Build the canonical list of chemical-nodes for the value-chain canvas.
+// Each unique (chemicalId or chemical name) becomes ONE node, even if it has
+// multiple grades. Returns array of node descriptors with stage + position.
+function buildChainNodes(products) {
+  const nodes = new Map();
   for (const p of products) {
-    const stage = classifyChainStage(p);
-    if (!stageMap[stage]) stageMap[stage] = [];
-    stageMap[stage].push(p);
+    const key = p.chemicalId || p.chemical || p.name;
+    if (!key || nodes.has(key)) {
+      // Already added; just bump grade count
+      if (nodes.has(key)) nodes.get(key).gradeCount++;
+      continue;
+    }
+    const ref = p.chemicalId ? CHEMICALS_BY_ID[p.chemicalId] : null;
+    const stage = ref?.chainStage || classifyChainStage(p);
+    nodes.set(key, {
+      id: key,
+      chemicalId: p.chemicalId,
+      name: ref?.name || p.chemical || p.name,
+      cas: ref?.cas,
+      stage,
+      segment: ref?.segment || p.segment,
+      upstream:   ref?.upstream || [],
+      downstream: ref?.downstream || [],
+      gradeCount: 1,
+    });
+  }
+  return [...nodes.values()];
+}
+
+// Auto-position chain nodes — one column per stage, vertical stack within column
+function autoPositionNodes(nodes) {
+  const stageMap = {};
+  for (const n of nodes) {
+    if (!stageMap[n.stage]) stageMap[n.stage] = [];
+    stageMap[n.stage].push(n);
   }
   const positions = {};
   const STAGE_X_GAP = 280;
-  const NODE_Y_GAP = 90;
+  const NODE_Y_GAP = 80;
   for (const stage of CHAIN_STAGES) {
     const items = stageMap[stage.id] || [];
-    items.forEach((p, i) => {
-      positions[p.id] = {
+    items.forEach((n, i) => {
+      positions[n.id] = {
         x: 100 + stage.order * STAGE_X_GAP,
         y: 100 + i * NODE_Y_GAP,
         stage: stage.id,
@@ -3459,75 +4187,72 @@ function autoPositionProducts(products) {
   return positions;
 }
 
-// Detect upstream/downstream relationships between products by stage order.
-// A node in stage N connects to nodes in stage N+1 IF they share a category.
-function inferConnections(products, positions) {
+// Connections between chain nodes: from explicit upstream/downstream lists in
+// the BASF chemical graph. We only draw an edge if both endpoints exist as
+// nodes in the current node set (i.e. the supplier actually carries both).
+function buildChainConnections(nodes) {
+  const byName = new Map(nodes.map(n => [n.name, n]));
   const conns = [];
-  for (const a of products) {
-    const aStage = positions[a.id]?.stage;
-    if (!aStage) continue;
-    const aOrder = CHAIN_STAGES.find(s => s.id === aStage)?.order;
-    for (const b of products) {
-      if (a.id === b.id) continue;
-      const bStage = positions[b.id]?.stage;
-      const bOrder = CHAIN_STAGES.find(s => s.id === bStage)?.order;
-      if (bOrder !== aOrder + 1) continue;     // only adjacent stages
-      // Heuristic relationship: same category OR shared keyword
-      const sameCategory = a.category && a.category === b.category;
-      const aText = `${a.name} ${a.chemical || ""}`.toLowerCase();
-      const bText = `${b.name} ${b.chemical || ""}`.toLowerCase();
-      const sharedKeyword = ["acrylic","amine","ester","urethane","ethoxylate","methyl","ethyl"].some(
-        k => aText.includes(k) && bText.includes(k)
-      );
-      if (sameCategory || sharedKeyword) {
-        conns.push({ from: a.id, to: b.id });
-      }
+  for (const a of nodes) {
+    for (const downName of a.downstream || []) {
+      const b = byName.get(downName);
+      if (b) conns.push({ from: a.id, to: b.id });
+    }
+    for (const upName of a.upstream || []) {
+      const b = byName.get(upName);
+      if (b) conns.push({ from: b.id, to: a.id });
     }
   }
-  return conns;
+  // Dedupe
+  const seen = new Set();
+  return conns.filter(c => {
+    const k = `${c.from}->${c.to}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
-function ValueChainModule({ products }) {
-  const [positions, setPositions] = useState(() => autoPositionProducts(products));
-  const [connections, setConnections] = useState(() => inferConnections(products, autoPositionProducts(products)));
+function ValueChainModule({ products, onSelectChemical }) {
+  // Compute chain nodes from products (one per chemical, not per grade)
+  const nodes = useMemo(() => buildChainNodes(products), [products]);
+
+  const [positions, setPositions] = useState(() => autoPositionNodes(buildChainNodes(products)));
+  const [connections, setConnections] = useState(() => buildChainConnections(buildChainNodes(products)));
   const [selected, setSelected] = useState(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [dragNode, setDragNode] = useState(null);     // {id, offX, offY}
-  const [panStart, setPanStart] = useState(null);     // {x, y, panX, panY}
+  const [dragNode, setDragNode] = useState(null);
+  const [panStart, setPanStart] = useState(null);
   const canvasRef = useRef(null);
 
-  // Auto-add new products: when products list changes, add positions for new ones
+  // When products change, refresh positions for new nodes; keep manual positions for existing.
   useEffect(() => {
-    const fresh = autoPositionProducts(products);
+    const fresh = autoPositionNodes(nodes);
     setPositions(prev => {
       const next = { ...prev };
-      for (const p of products) {
-        if (!next[p.id]) next[p.id] = fresh[p.id];
+      for (const n of nodes) {
+        if (!next[n.id]) next[n.id] = fresh[n.id];
       }
+      // Drop positions for removed nodes
+      const validIds = new Set(nodes.map(n => n.id));
       for (const id of Object.keys(next)) {
-        if (!products.find(p => p.id === id)) delete next[id];
+        if (!validIds.has(id)) delete next[id];
       }
       return next;
     });
-    // Recompute connections from the next-state positions. We use the freshly
-    // auto-positioned set merged with any manual overrides we already had.
-    setConnections(prevConn => {
-      // Build the position map we'd expect post-merge
-      // (for connection inference, exact x/y don't matter — only stage matters,
-      // and stage comes from auto-positioning which is deterministic)
-      return inferConnections(products, fresh);
-    });
-  }, [products]);
+    setConnections(buildChainConnections(nodes));
+  }, [nodes]);
 
   // Mouse handlers
-  const onMouseDown = (e, productId) => {
+  const onMouseDown = (e, nodeId) => {
     e.stopPropagation();
     const rect = canvasRef.current.getBoundingClientRect();
     const px = (e.clientX - rect.left - pan.x) / zoom;
     const py = (e.clientY - rect.top - pan.y) / zoom;
-    const pos = positions[productId];
-    setDragNode({ id: productId, offX: px - pos.x, offY: py - pos.y });
+    const pos = positions[nodeId];
+    if (!pos) return;
+    setDragNode({ id: nodeId, offX: px - pos.x, offY: py - pos.y, started: e.clientX });
   };
 
   const onCanvasMouseDown = (e) => {
@@ -3560,11 +4285,10 @@ function ValueChainModule({ products }) {
     setZoom(z => Math.max(0.4, Math.min(2.5, z * delta)));
   };
 
-  // Reset to auto layout
   const resetLayout = () => {
-    const fresh = autoPositionProducts(products);
+    const fresh = autoPositionNodes(nodes);
     setPositions(fresh);
-    setConnections(inferConnections(products, fresh));
+    setConnections(buildChainConnections(nodes));
     setPan({ x: 0, y: 0 });
     setZoom(1);
   };
@@ -3573,10 +4297,10 @@ function ValueChainModule({ products }) {
   const stageColumns = CHAIN_STAGES.map(s => ({
     ...s,
     x: 100 + s.order * 280,
-    count: products.filter(p => positions[p.id]?.stage === s.id).length,
+    count: nodes.filter(n => positions[n.id]?.stage === s.id).length,
   }));
 
-  if (products.length === 0) {
+  if (nodes.length === 0) {
     return (
       <div className="p-8">
         <div className="mb-5">
@@ -3598,7 +4322,7 @@ function ValueChainModule({ products }) {
         <div>
           <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Value Chain</h2>
           <p className="text-[12px] text-zinc-500 mt-1">
-            Drag nodes to reposition. Scroll to zoom. Click a node to inspect.
+            {SUPPLIER.name} participation across the chain. Drag nodes to reposition. Click a node to inspect.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -3616,7 +4340,6 @@ function ValueChainModule({ products }) {
         </div>
       </div>
 
-      {/* The canvas */}
       <Card className="!p-0 overflow-hidden">
         <div
           ref={canvasRef}
@@ -3654,16 +4377,13 @@ function ValueChainModule({ products }) {
           </div>
 
           {/* Connections (SVG edges) */}
-          <svg
-            className="absolute inset-0 pointer-events-none"
-            style={{ width: "100%", height: "100%", overflow: "visible" }}
-          >
+          <svg className="absolute inset-0 pointer-events-none"
+               style={{ width: "100%", height: "100%", overflow: "visible" }}>
             <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}>
               {connections.map((c, i) => {
                 const a = positions[c.from];
                 const b = positions[c.to];
                 if (!a || !b) return null;
-                // Curved bezier path from right-edge of A to left-edge of B
                 const ax = a.x + 200, ay = a.y + 28;
                 const bx = b.x, by = b.y + 28;
                 const cx = (ax + bx) / 2;
@@ -3679,19 +4399,27 @@ function ValueChainModule({ products }) {
             </g>
           </svg>
 
-          {/* Nodes */}
+          {/* Nodes (one per chemical) */}
           <div className="absolute inset-0"
                style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}>
-            {products.map(p => {
-              const pos = positions[p.id];
+            {nodes.map(n => {
+              const pos = positions[n.id];
               if (!pos) return null;
-              const isSelected = selected === p.id;
+              const isSelected = selected === n.id;
               const stage = CHAIN_STAGES.find(s => s.id === pos.stage);
+              const segment = n.segment ? BUSINESS_SEGMENTS.find(s => s.id === n.segment) : null;
               return (
                 <div
-                  key={p.id}
-                  onMouseDown={(e) => onMouseDown(e, p.id)}
-                  onClick={(e) => { e.stopPropagation(); setSelected(isSelected ? null : p.id); }}
+                  key={n.id}
+                  onMouseDown={(e) => onMouseDown(e, n.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelected(isSelected ? null : n.id);
+                  }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    if (n.chemicalId) onSelectChemical?.({ chemicalId: n.chemicalId, name: n.name });
+                  }}
                   className={cx(
                     "absolute select-none transition-shadow",
                     "rounded-lg border bg-[#1c1c1e] px-3 py-2.5 cursor-grab active:cursor-grabbing",
@@ -3707,9 +4435,17 @@ function ValueChainModule({ products }) {
                       isSelected ? "bg-lime-300" : "bg-zinc-600"
                     )} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[11.5px] text-zinc-100 truncate font-medium">{p.name}</div>
-                      <div className="text-[9.5px] text-zinc-500 mt-0.5 truncate">
-                        {stage?.label || "—"}
+                      <div className="text-[12px] text-zinc-100 truncate font-medium">{n.name}</div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[9.5px] text-zinc-500 truncate">
+                          {stage?.label}
+                        </span>
+                        {segment && (
+                          <span className="text-[9px] uppercase tracking-widest text-lime-300/70">· {segment.short}</span>
+                        )}
+                        <span className="text-[9.5px] text-zinc-600 tabular-nums ml-auto">
+                          {n.gradeCount}g
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -3718,42 +4454,57 @@ function ValueChainModule({ products }) {
             })}
           </div>
 
-          {/* Helper text bottom-left */}
           <div className="absolute bottom-3 left-4 text-[10px] text-zinc-600 pointer-events-none">
-            Drag node to move · Drag canvas to pan · Scroll to zoom
+            Drag to move · Click to select · Double-click to inspect
           </div>
         </div>
       </Card>
 
-      {/* Selected product detail */}
+      {/* Selected chemical detail */}
       {selected && (() => {
-        const p = products.find(x => x.id === selected);
-        if (!p) return null;
-        const stage = CHAIN_STAGES.find(s => s.id === positions[p.id]?.stage);
-        const downstream = connections.filter(c => c.from === p.id).map(c => products.find(x => x.id === c.to)).filter(Boolean);
-        const upstream   = connections.filter(c => c.to === p.id).map(c => products.find(x => x.id === c.from)).filter(Boolean);
+        const n = nodes.find(x => x.id === selected);
+        if (!n) return null;
+        const stage = CHAIN_STAGES.find(s => s.id === positions[n.id]?.stage);
+        const downstream = connections.filter(c => c.from === n.id).map(c => nodes.find(x => x.id === c.to)).filter(Boolean);
+        const upstream   = connections.filter(c => c.to === n.id).map(c => nodes.find(x => x.id === c.from)).filter(Boolean);
+        const segment = n.segment ? BUSINESS_SEGMENTS.find(s => s.id === n.segment) : null;
         return (
           <Card>
             <div className="flex items-start justify-between gap-4 mb-3">
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">{stage?.label}</div>
-                <h3 className="text-[15px] font-medium text-zinc-100 truncate">{p.name}</h3>
-                {p.chemical && p.chemical !== "Unknown" && (
-                  <div className="text-[11.5px] text-zinc-400 mt-1 truncate">{p.chemical}</div>
-                )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-zinc-500 mb-1">
+                  <span>{stage?.label}</span>
+                  {segment && <><span>·</span><span>{segment.name}</span></>}
+                </div>
+                <h3 className="text-[15px] font-medium text-zinc-100 truncate">{n.name}</h3>
+                <div className="flex items-center gap-2 mt-1.5">
+                  {n.cas && n.cas !== "Various" && (
+                    <span className="text-[11px] tabular-nums text-zinc-500">{n.cas}</span>
+                  )}
+                  <span className="text-[11px] text-zinc-500">·</span>
+                  <span className="text-[11px] text-zinc-500">{n.gradeCount} grade{n.gradeCount === 1 ? "" : "s"}</span>
+                </div>
               </div>
-              <button onClick={() => setSelected(null)}
-                      className="w-7 h-7 rounded hover:bg-zinc-800 flex items-center justify-center text-zinc-400">
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {n.chemicalId && (
+                  <button onClick={() => onSelectChemical?.({ chemicalId: n.chemicalId, name: n.name })}
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[11.5px] text-zinc-300 bg-[#252528] border border-zinc-800 hover:bg-zinc-800">
+                    <Info className="w-3 h-3 text-lime-300" />Inspect
+                  </button>
+                )}
+                <button onClick={() => setSelected(null)}
+                        className="w-7 h-7 rounded hover:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-zinc-800">
               <div>
                 <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">
                   Upstream ({upstream.length})
                 </div>
                 {upstream.length === 0 ? (
-                  <div className="text-[11.5px] text-zinc-600 italic">No upstream products</div>
+                  <div className="text-[11.5px] text-zinc-600 italic">None / feedstock</div>
                 ) : (
                   <div className="space-y-1">
                     {upstream.map(u => (
@@ -3770,7 +4521,7 @@ function ValueChainModule({ products }) {
                   Downstream ({downstream.length})
                 </div>
                 {downstream.length === 0 ? (
-                  <div className="text-[11.5px] text-zinc-600 italic">No downstream products</div>
+                  <div className="text-[11.5px] text-zinc-600 italic">Terminal / finished</div>
                 ) : (
                   <div className="space-y-1">
                     {downstream.map(d => (
@@ -3787,6 +4538,291 @@ function ValueChainModule({ products }) {
         );
       })()}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SEGMENTS MODULE — BASF business divisions with cross-filtering
+// ---------------------------------------------------------------------------
+
+function SegmentsModule({ products, onSelectChemical, onSelectSegment }) {
+  const [activeSegment, setActiveSegment] = useState(null);
+
+  // Group products by chemical first (so we show chemicals not grades)
+  const productsByChemical = useMemo(() => {
+    const map = new Map();
+    for (const p of products) {
+      const key = p.chemicalId || p.chemical;
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, { ...p, gradeCount: 0, sampleP: p });
+      map.get(key).gradeCount++;
+    }
+    return map;
+  }, [products]);
+
+  const segmentStats = useMemo(() => {
+    return BUSINESS_SEGMENTS.map(seg => {
+      const chems = [...productsByChemical.values()].filter(p => p.segment === seg.id);
+      const grades = products.filter(p => p.segment === seg.id).length;
+      return { ...seg, chemicalCount: chems.length, gradeCount: grades, chemicals: chems };
+    });
+  }, [productsByChemical, products]);
+
+  const filtered = activeSegment
+    ? segmentStats.filter(s => s.id === activeSegment)
+    : segmentStats;
+
+  return (
+    <div className="p-8 space-y-5">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-[22px] font-medium text-zinc-50 tracking-tight">Business Segments</h2>
+          <p className="text-[12px] text-zinc-500 mt-1">
+            BASF's six operating divisions — click any to filter the view. Click a chemical to inspect its full context.
+          </p>
+        </div>
+        {activeSegment && (
+          <button onClick={() => setActiveSegment(null)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#252528] border border-zinc-800 text-[12px] text-zinc-300 hover:bg-zinc-800">
+            <X className="w-3.5 h-3.5" />Clear filter
+          </button>
+        )}
+      </div>
+
+      {/* Top-level segment tiles */}
+      {!activeSegment && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {segmentStats.map(s => (
+            <button key={s.id}
+                    onClick={() => setActiveSegment(s.id)}
+                    className="text-left rounded-2xl border border-zinc-800 bg-[#1c1c1e] hover:border-zinc-700 hover:bg-[#1f1f22] p-5 transition-colors">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Division</div>
+                  <h3 className="text-[16px] font-medium text-zinc-100">{s.name}</h3>
+                </div>
+                <div className="shrink-0 w-7 h-7 rounded-lg bg-lime-300/10 flex items-center justify-center">
+                  <span className="text-[10px] uppercase tracking-widest text-lime-300">{s.short}</span>
+                </div>
+              </div>
+              <p className="text-[12px] text-zinc-400 leading-relaxed mb-4 line-clamp-2">{s.description}</p>
+              <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+                <div className="flex items-center gap-3 text-[11px] text-zinc-500">
+                  <span><span className="text-zinc-200 font-medium">{s.chemicalCount}</span> chemicals</span>
+                  <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                  <span><span className="text-zinc-200 font-medium">{s.gradeCount}</span> grades</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Filtered single-segment detail */}
+      {activeSegment && filtered[0] && (
+        <Card>
+          <div className="flex items-start gap-4 mb-5 pb-5 border-b border-zinc-800">
+            <div className="shrink-0 w-12 h-12 rounded-xl bg-lime-300/10 flex items-center justify-center">
+              <span className="text-[12px] uppercase tracking-widest text-lime-300 font-medium">{filtered[0].short}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">BASF Division</div>
+              <h3 className="text-[18px] font-medium text-zinc-100 mb-1.5">{filtered[0].name}</h3>
+              <p className="text-[12.5px] text-zinc-400 leading-relaxed">{filtered[0].description}</p>
+            </div>
+          </div>
+
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">
+            Chemicals in this division ({filtered[0].chemicalCount})
+          </div>
+          {filtered[0].chemicals.length === 0 ? (
+            <div className="py-12 text-center text-zinc-500 text-[12px]">No chemicals catalogued in this division yet</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {filtered[0].chemicals.map(p => {
+                const ref = p.chemicalId ? CHEMICALS_BY_ID[p.chemicalId] : null;
+                return (
+                  <button key={p.chemicalId || p.chemical}
+                          onClick={() => onSelectChemical?.({ chemicalId: p.chemicalId, name: ref?.name || p.chemical })}
+                          className="text-left p-3 rounded-lg border border-zinc-800 bg-[#161618] hover:bg-zinc-800/40 hover:border-zinc-700 transition-colors">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] text-zinc-100 font-medium truncate">{ref?.name || p.chemical}</div>
+                        <div className="flex items-center gap-2 mt-1 text-[11px] text-zinc-500">
+                          {ref?.cas && <span className="tabular-nums">{ref.cas}</span>}
+                          {ref?.chainStage && <Pill tone="muted">{ref.chainStage}</Pill>}
+                          <span>{p.gradeCount} grade{p.gradeCount === 1 ? "" : "s"}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CONTEXT DRAWER — opens for any entity (chemical, segment, value-chain node)
+// Shows: BASF relevance, segment, chemicals, grades, applications, chain
+// ---------------------------------------------------------------------------
+
+function ContextDrawer({ entity, products, onClose, onSelectChemical }) {
+  if (!entity) return null;
+
+  // Resolve the chemical from the entity (could be chemicalId, chemical name, or graph node)
+  const chemical = entity.chemicalId
+    ? CHEMICALS_BY_ID[entity.chemicalId]
+    : CHEMICALS.find(c => c.name === entity.name || c.id === entity.id);
+
+  if (!chemical) {
+    return (
+      <>
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="fixed top-0 right-0 bottom-0 w-full max-w-[520px] z-50 bg-[#161618] border-l border-zinc-800 flex flex-col">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800">
+            <h2 className="text-[16px] font-medium text-zinc-100">{entity.name || "Entity"}</h2>
+            <button onClick={onClose} className="w-7 h-7 rounded hover:bg-zinc-800 flex items-center justify-center text-zinc-400">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex-1 p-6 text-zinc-500 text-[12px]">No additional context available for this entity.</div>
+        </div>
+      </>
+    );
+  }
+
+  const segment = BUSINESS_SEGMENTS.find(s => s.id === chemical.segment);
+  const grades = products.filter(p => p.chemicalId === chemical.id);
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed top-0 right-0 bottom-0 w-full max-w-[560px] z-50 bg-[#161618] border-l border-zinc-800 flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Chemical</div>
+            <h2 className="text-[18px] font-medium text-zinc-100 truncate">{chemical.name}</h2>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {chemical.cas !== "Various" && <Pill tone="muted"><span className="tabular-nums">{chemical.cas}</span></Pill>}
+              {chemical.formula !== "Various" && <Pill tone="muted">{chemical.formula}</Pill>}
+              {chemical.chainStage && <Pill tone="accent">{chemical.chainStage}</Pill>}
+            </div>
+          </div>
+          <button onClick={onClose} className="shrink-0 w-7 h-7 rounded hover:bg-zinc-800 flex items-center justify-center text-zinc-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {/* BASF relevance */}
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">BASF position</div>
+            <p className="text-[12.5px] text-zinc-300 leading-relaxed">{chemical.description}</p>
+          </div>
+
+          {/* Segment */}
+          {segment && (
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Business segment</div>
+              <div className="rounded-lg border border-zinc-800 bg-[#1c1c1e] p-3 flex items-start gap-3">
+                <div className="shrink-0 w-8 h-8 rounded-lg bg-lime-300/10 flex items-center justify-center">
+                  <span className="text-[9px] uppercase tracking-widest text-lime-300">{segment.short}</span>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[13px] text-zinc-100 font-medium">{segment.name}</div>
+                  <div className="text-[11.5px] text-zinc-500 mt-0.5 leading-snug line-clamp-2">{segment.description}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Value chain position */}
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Value chain position</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-zinc-800 bg-[#1c1c1e] p-3">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Upstream</div>
+                {chemical.upstream && chemical.upstream.length ? (
+                  <div className="space-y-1">
+                    {chemical.upstream.map(u => (
+                      <button key={u}
+                              onClick={() => {
+                                const m = CHEMICALS.find(c => c.name === u);
+                                if (m) onSelectChemical?.({ chemicalId: m.id, name: m.name });
+                              }}
+                              className="block w-full text-left text-[11.5px] text-zinc-300 hover:text-lime-300 hover:underline">
+                        ← {u}
+                      </button>
+                    ))}
+                  </div>
+                ) : <div className="text-[11.5px] text-zinc-600 italic">None / feedstock</div>}
+              </div>
+              <div className="rounded-lg border border-zinc-800 bg-[#1c1c1e] p-3">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Downstream</div>
+                {chemical.downstream && chemical.downstream.length ? (
+                  <div className="space-y-1">
+                    {chemical.downstream.map(d => (
+                      <button key={d}
+                              onClick={() => {
+                                const m = CHEMICALS.find(c => c.name === d);
+                                if (m) onSelectChemical?.({ chemicalId: m.id, name: m.name });
+                              }}
+                              className="block w-full text-left text-[11.5px] text-zinc-300 hover:text-lime-300 hover:underline">
+                        {d} →
+                      </button>
+                    ))}
+                  </div>
+                ) : <div className="text-[11.5px] text-zinc-600 italic">Terminal</div>}
+              </div>
+            </div>
+          </div>
+
+          {/* Applications */}
+          {chemical.applications && (
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Applications</div>
+              <div className="flex flex-wrap gap-1.5">
+                {chemical.applications.map(a => <Pill key={a} tone="muted">{a}</Pill>)}
+              </div>
+            </div>
+          )}
+
+          {/* Grades available */}
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">
+              BASF grades ({grades.length})
+            </div>
+            {grades.length === 0 ? (
+              <div className="text-[11.5px] text-zinc-600 italic">No grades catalogued</div>
+            ) : (
+              <div className="space-y-1.5">
+                {grades.map(g => (
+                  <div key={g.id} className="rounded-lg border border-zinc-800 bg-[#1c1c1e] p-3">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="text-[12.5px] text-zinc-100 font-medium">{g.name}</div>
+                      {g.top && <Star className="w-3 h-3 text-lime-300 fill-lime-300 shrink-0 mt-1" />}
+                    </div>
+                    {g.grade && g.grade !== "Standard" && (
+                      <div className="text-[11px] text-zinc-500 leading-snug">{g.grade}</div>
+                    )}
+                    {g.application && g.application !== "Unknown" && (
+                      <div className="text-[11px] text-zinc-400 mt-1">→ {g.application}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -3822,6 +4858,10 @@ export default function App() {
   const removeContact = (id) => setContacts(prev => prev.filter(c => c.id !== id));
   const removeProduct = (id) => setProducts(prev => prev.filter(p => p.id !== id));
 
+  // Cross-linking: clicking any chemical anywhere opens the context drawer.
+  const [contextEntity, setContextEntity] = useState(null);
+  const openChemical = (entity) => setContextEntity(entity);
+
   return (
     <div className="min-h-screen bg-[#1a1a1c] text-zinc-100 antialiased flex"
          style={{ fontFamily: "'Inter Tight', ui-sans-serif, system-ui, sans-serif" }}>
@@ -3849,7 +4889,7 @@ export default function App() {
               {view === "home" && "Dashboard"}
               {view === "contacts" && "Contacts Intelligence"}
               {view === "catalogue" && "Product Catalogue"}
-              {view === "recommend" && "Recommendation Engine"}
+              {view === "segments" && "Business Segments"}
               {view === "valuechain" && "Value Chain"}
               {view === "benchmark" && "Competitive Benchmarking"}
             </span>
@@ -3862,17 +4902,21 @@ export default function App() {
           </div>
         </div>
 
-        {view === "home" && <Dashboard contacts={contacts} products={products} />}
+        {view === "home" && <Dashboard contacts={contacts} products={products} onSelectChemical={openChemical} />}
         {view === "contacts" && <ContactsModule contacts={contacts} onIngest={ingestContacts} onRemove={removeContact} />}
-        {view === "catalogue" && <CatalogueModule products={products} contacts={contacts} onIngest={ingestProducts} onRemove={removeProduct} />}
-        {view === "recommend" && <RecommendModule contacts={contacts} products={products} />}
-        {view === "valuechain" && <ValueChainModule products={products} />}
+        {view === "catalogue" && <CatalogueModule products={products} contacts={contacts} onIngest={ingestProducts} onRemove={removeProduct} onSelectChemical={openChemical} />}
+        {view === "segments" && <SegmentsModule products={products} onSelectChemical={openChemical} />}
+        {view === "valuechain" && <ValueChainModule products={products} onSelectChemical={openChemical} />}
         {view === "benchmark" && <BenchmarkingModule products={products} settings={settings} />}
       </main>
 
       {showSettings && (
         <SettingsDrawer settings={settings} onChange={updateSettings} onClose={() => setShowSettings(false)} />
       )}
+
+      <ContextDrawer entity={contextEntity} products={products}
+                     onClose={() => setContextEntity(null)}
+                     onSelectChemical={openChemical} />
     </div>
   );
 }
