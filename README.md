@@ -1,22 +1,28 @@
-# Supplier Workspace
+# Supplier Intelligence Workspace
 
-A B2B chemical sourcing intelligence tool — built around a single supplier profile, designed to answer the questions a procurement or sourcing analyst actually asks: *who do I talk to, what do they sell, where are the gaps, and how do they compare?*
+A decision-grade supplier intelligence cockpit, demoed against **BASF SE** as the reference supplier.
 
-This is a working prototype. Drop in real PDFs of supplier catalogues or contact directories and watch the app extract, classify, and analyse them. Everything runs in your browser — no server, no database, no API keys.
+This is a working prototype designed for sourcing teams, category managers, and executive review. It combines a curated knowledge graph of BASF's industrial footprint with PDF parsing, a freeform value-chain canvas, and live competitor benchmarking — all running in your browser, no backend.
 
 ![status](https://img.shields.io/badge/status-prototype-amber) ![backend](https://img.shields.io/badge/backend-none-lime) ![cost](https://img.shields.io/badge/cost-%240%2Fmonth-lime)
 
 ---
 
-## Why this exists
+## What this answers
 
-Sourcing teams typically waste hours every week on three things:
+When a sourcing analyst asks: *what does BASF actually make, where do they sit in global chemical chains, and how does any single product compare to alternatives?* — this gives an answer in under thirty seconds.
 
-1. **Reading PDFs.** Suppliers send product catalogues and contact directories as PDFs. Someone has to manually transcribe them into a CRM or spreadsheet.
-2. **Routing RFQs.** When a buyer asks about a product, who in the supplier's organisation is the right contact? Sales? Technical? In which region?
-3. **Spotting weak coverage.** A supplier might have great pricing on solvents but no technical support contact in Europe. You only find that out the hard way.
+The hierarchical model is canonical and consistent across every view:
 
-This prototype tackles all three. It parses real supplier PDFs, scores contact-product fit, surfaces coverage gaps as a heatmap, and benchmarks the supplier against peers.
+```
+Supplier (BASF SE)
+  └─ Business Segment   (e.g. Chemicals, Materials, Industrial Solutions, …)
+     └─ Chemical        (e.g. Acetone, MDI, Acrylic Dispersion)
+        └─ Grade        (e.g. Lupranat M 20 S — Polymeric MDI, NCO 31.5%)
+           └─ Application
+```
+
+Selecting any entity (chemical, segment, value-chain node) opens a context drawer showing the full cross-linked picture: which BASF division owns it, what BASF grades exist, where it sits upstream/downstream in the chain, and what it's used for.
 
 ---
 
@@ -24,161 +30,67 @@ This prototype tackles all three. It parses real supplier PDFs, scores contact-p
 
 ### Six functional modules
 
-**Dashboard.** Headline view of one supplier — score out of 100, certifications, benchmarking percentiles, recent RFQ activity, geographic footprint, AI-generated insights, next best actions.
+**Dashboard.** BASF-flavoured headline view — certifications (REACH, ISCC PLUS, Responsible Care), Verbund integration percentile, recent quote activity in EUR, geographic footprint, AI-generated insights aligned to BASF's actual commercial position (energy cost pressure in EU production, battery materials growth, MDI capacity expansion).
 
-**Contacts Intelligence.** Searchable contact directory with role and region filters. Upload a PDF/CSV/Excel and the parser extracts contacts, classifies their role (Sales / Technical / Procurement / Management), infers their region from email TLD or phone country code, and stamps each row with the source file and page number.
+**Contacts.** Searchable BASF roster. Upload a PDF/CSV/Excel and the parser extracts contacts, classifies role (Sales / Technical / Procurement / Management), infers region, and stamps each row with source file and page. Manual add form for one-off entries. Hover-to-delete on every row.
 
-**Product Catalogue.** Same upload pipeline, but for products. Extracts product name, chemical name, category, application, grade, and CAS number. Every Unknown field has a small sparkle button that queries [PubChem](https://pubchem.ncbi.nlm.nih.gov/) (NIH's free chemistry database, no API key needed) to fill in canonical IUPAC names and CAS numbers from a verified source. Falls back to keyword heuristics for category/application when PubChem doesn't apply.
+**Catalogue.** Hierarchical chemical-first view — only chemical names show at the top level (Acetone, Phenol, Bisphenol A, MDI, …), each with CAS, formula, division, chain stage, and grade count. Click any row to expand the BASF grades inside, with specs and applications. Click "Inspect" to open the full context drawer. Manual add form. Hover-to-delete per grade.
 
-**Recommend.** Type a product name, category, or CAS number. The engine matches it to your loaded contacts and ranks them by fit — weighting role appropriateness, region-vs-product alignment (e.g., coatings in Europe, solvents in MEA, pharma in Americas), decision-maker status, and recent RFQ activity. Confidence scores are tunable with thumb up/down feedback.
+**Segments.** Six BASF operating divisions (Chemicals, Materials, Industrial Solutions, Surface Technologies, Nutrition & Care, Agricultural Solutions) as filter tiles. Each tile shows chemical and grade counts. Click a division to drill into its chemicals; click any chemical to inspect its full context.
 
-**Gap Analysis.** A categories × regions coverage matrix shows where you have products but no regional support — green (covered), amber (single point of failure), red (gap), grey (no SKU). Side panels list contact gaps by region/role and catalogue rows with missing fields.
+**Value Chain.** Freeform canvas — drag, pan, zoom — with one node per chemical, organized into six stage columns (Feedstock → Intermediate → Monomer → Polymer → Additive → Finished). Edges drawn from explicit upstream/downstream relationships in the BASF graph (Phenol→Acetone→Bisphenol A, Ethylene→Ethylene Oxide→{MEG, MEA, Polyols}, Acrylic Acid→{Butyl Acrylate, Acrylic Dispersion, SAP}, MDI→{TPU, Polyurethane Dispersion}, etc.). Click a node to select; double-click to open the context drawer.
 
-**Competitive Benchmarking.** Hexakron vs four peer suppliers across pricing, responsiveness, compliance, breadth, and geographic coverage. Percentile bars with peer median markers. Auto-generated strength/weakness lists and negotiation suggestions.
-
-### Document parser
-
-The most engineering-heavy part. Supplier PDFs come in wildly different shapes — Sun Chemical's catalogue is a 4-column-wide table per page with brand-row labels in the left margin; Indorama's directory has rotated `®` superscripts on separate y-coordinates from the product code; SABIC's global directory is a 4-column-of-countries layout that needs to be parsed independently per column; Stéarinerie Dubois has compliance flags (NATRUE, COSMOS, IECIC) that have to be filtered out of chemical descriptions; AACL writes CAS numbers with spaces (`108 - 18 - 9`).
-
-The parser handles all of these by:
-
-- **Detecting page-column layout** before line-grouping. Histogram-based, with a heuristic to distinguish multi-column directories from wide single-table layouts.
-- **Anchoring extraction on signals**, not positions. Either a CAS-loose regex match (tolerates internal spaces) or a brand-prefix SKU pattern. About 30 chemical brand prefixes are baked in (DUB, OXITIVE, BURNOCK, SURFONIC, ALKOSYNT, EPICLON, etc.) plus dash-style codes (AC-1218) and spaced codes (MC 6760).
-- **Filtering ~25 junk patterns** — page numbers, copyright lines, marketing prose, "About Us" headers, inventory token strings.
-- **Document-type detection** — classifies a PDF as `products`, `contacts`, or `unknown` based on weighted signals (CAS density vs email density, table-header keywords, country-section patterns). Refuses to parse a PDF uploaded under the wrong tab.
-
-Tested against 7 real supplier PDFs (Sun Chemical Advanced Materials, Indorama Chemistries for North America, Stéarinerie Dubois Esters, AACL Product List, Alkyl Amines presentation, SABIC Global Directory, Indovinya NA Coatings). Extracts 20–127 clean rows per file with verifiable source-page traceability. The Alkyl Amines slide deck — graphic-heavy, not a real table — falls through to "unknown" gracefully instead of producing garbage.
-
-### AI Suggest
-
-Every Unknown field in the parse-preview drawer has a small lime sparkle button next to it. Clicking it:
-
-1. Calls PubChem's REST API with the product name and chemical name as queries
-2. Resolves to a Compound ID, fetches the canonical IUPAC name, molecular formula, and CAS number from the synonyms list
-3. Stores the source as `PubChem CID xxxxx` so you know where the value came from
-4. For category/application/grade where PubChem doesn't apply, falls back to deterministic keyword inference and tags the source as `Inferred from chemistry keywords`
-
-Verified, attributable, no LLM fabrication, no API keys, no cost.
+**Benchmarking.** Per-product competitor view. For each BASF product, shows competitor companies and their actual product/trade names. Hybrid lookup: curated knowledge base (~50 chemicals, including direct CAS hits for Acetone, MEG, MDI, MEA, Triethanolamine, Acrylic Resin, etc.) plus optional live Google Programmable Search (bring your own free key) for live cross-checking.
 
 ---
 
-## Stack
+## How the BASF data is structured
 
-- **React 18** + **Vite** — fast dev loop, tiny bundle (72 KB gzipped)
-- **Tailwind CSS** — design tokens for the dark theme (`#1a1a1c` background, lime-300 accents only)
-- **lucide-react** — icon set
-- **PDF.js** — Mozilla's PDF parser, loaded on demand from CDN
-- **PapaParse** + **SheetJS** — CSV and Excel parsing, also CDN-loaded on demand
-- **PubChem PUG REST** — free public chemistry database, called directly from the browser
+Everything is curated static data inside `App.jsx` (around line 17). No network calls during the demo, no flakiness, no CORS issues.
 
-No backend. No database. State lives in React. Uploaded files are parsed in the browser and never leave the user's machine.
+The graph encodes:
+
+- **6 operating divisions** (post-2024 BASF restructuring)
+- **31 representative chemicals** spanning all divisions, with CAS, formula, chain stage, BASF position description, upstream/downstream lists, and applications
+- **80+ BASF product grades** with trade names (Lupranat, Lupranol, Acronal, Astacin, Hysorb, Ultramid, Ultradur, Elastollan, Cathoguard, iGloss, Lutavit, Tinosorb, Cetiol, Liberty, Headline, …) and their specs
+
+This is demo-grade — complete enough to convincingly demonstrate BASF's industrial footprint and value chain positioning, not a full data warehouse.
+
+---
+
+## Live competitor search (optional)
+
+The Benchmarking module has a curated competitor database that always works. For live cross-checking, the app supports Google Programmable Search:
+
+1. Open Settings (sidebar footer)
+2. Paste your Google API key and Search Engine ID (cx)
+3. Both are free — see [programmablesearchengine.google.com](https://programmablesearchengine.google.com/)
+
+Keys are stored in your browser's localStorage only, never sent anywhere except Google's API.
+
+---
+
+## Tech
+
+- React 18 + Vite + Tailwind
+- lucide-react icons
+- PDF.js for PDF parsing (loaded from CDN at runtime)
+- PapaParse + SheetJS for CSV / XLSX parsing (loaded from CDN at runtime)
+- No backend, no database, no API keys required for the core experience
+
+Build is around 305 KB minified / 87 KB gzipped.
 
 ---
 
 ## Running locally
 
-```bash
+```
 npm install
 npm run dev
 ```
 
-Opens at `http://localhost:5173`. Hot reload works.
+Open `http://localhost:5173`.
 
-To build the production bundle:
+## Deploying
 
-```bash
-npm run build
-```
-
-Output goes to `dist/`. Drop that on any static host (Vercel, Netlify, S3, GitHub Pages, your own server) and you're done.
-
-## Deploying to Vercel
-
-The `vercel.json` is pre-configured. If you're a non-coder, see the deployment walkthrough in [README-DEPLOY.md](./README-DEPLOY.md) — covers GitHub signup, drag-and-drop upload, and Vercel import without touching a command line.
-
-If you're comfortable with Git:
-
-```bash
-git init && git add . && git commit -m "initial"
-gh repo create supplier-workspace --public --source=. --push
-# then import in Vercel UI, or:
-vercel --prod
-```
-
----
-
-## Project structure
-
-```
-supplier-workspace/
-├── src/
-│   ├── App.jsx              ← the entire app, single file (~2700 lines)
-│   ├── main.jsx             ← React root
-│   └── index.css            ← Tailwind directives
-├── public/
-│   └── favicon.svg          ← lime diamond mark
-├── index.html               ← entry HTML
-├── package.json             ← dependencies
-├── vite.config.js           ← build config
-├── tailwind.config.js       ← Tailwind config
-├── postcss.config.js        ← PostCSS config
-├── vercel.json              ← Vercel deployment config
-├── README.md                ← this file
-└── README-DEPLOY.md         ← non-coder deploy walkthrough
-```
-
-`App.jsx` is intentionally a single file. The prototype is meant to be readable end-to-end, easily swapped for production architecture later. The major sections, in order: seed data → parser → helpers → atoms (Card, Pill, Bar) → Sidebar → SupplierHeader → Dashboard → upload pipeline → ContactsModule → CatalogueModule → RecommendModule → GapAnalysisModule → BenchmarkingModule → App root.
-
----
-
-## What's real vs mocked
-
-To set expectations honestly:
-
-| Component                       | Status                                                                                        |
-| ------------------------------- | --------------------------------------------------------------------------------------------- |
-| PDF/CSV/Excel parsing           | **Real.** Tested on 7 real supplier PDFs.                                                     |
-| AI Suggest (PubChem)            | **Real.** Calls live PubChem API, returns verified data with citation.                        |
-| Category/application heuristics | **Real.** Deterministic keyword classification.                                               |
-| Recommendation engine           | **Real algorithm,** scoring weights and rules are coded, not magic.                           |
-| Gap Analysis numbers            | **Real.** Computed from your loaded contacts/products in real time.                           |
-| Benchmarking peer data          | **Fixture.** Four hardcoded peer suppliers. Production would need a real peer database feed.  |
-| Quotes / RFQ activity           | **Fixture.** Six hardcoded quote rows on the Dashboard.                                       |
-| Supplier score (82/100)         | **Fixture.** Production would compute this from platform analytics.                           |
-| Geographic footprint percentages| **Fixture.** Static seed values.                                                              |
-
-Everything that's mocked is in clearly-named constants at the top of `App.jsx` (`SUPPLIER`, `QUOTES`, `PEER_SUPPLIERS`, etc.) and ready to be swapped for real data sources.
-
----
-
-## Known limitations
-
-- **No OCR.** PDFs of scanned documents won't parse — the app only extracts embedded text. Photos of business cards, scanned old catalogues, or image-only PDFs will return "no structured data found."
-- **Brand-name SKU edge cases.** Some product codes have trailing qualifiers that get truncated (e.g. `DUB 810 PG M` may parse as `DUB 810 PG`). User can fix in the preview drawer before saving.
-- **PubChem coverage.** Proprietary trade names like "BURNOCK AC-1218" aren't in PubChem. The chemistry inference (category/application/grade) still works heuristically.
-- **No persistence between sessions.** State lives in React only. Refresh the page and uploaded data is gone. (Production would back this with a database.)
-- **Single supplier.** This prototype shows one supplier (Hexakron Specialty Chemicals). Production would have a supplier picker.
-
----
-
-## Roadmap
-
-If this becomes a real product:
-
-- Persist state to a backend (Postgres + a small API)
-- Multi-supplier navigation with a supplier picker
-- Real peer benchmarking from platform-wide quote data
-- Automated email/calendar integration for the recommended contacts
-- Supplier scorecards exported as PDF
-- Webhook for inbound RFQs to auto-route via the Recommend engine
-- OCR pipeline for scanned PDFs
-
----
-
-## Credits
-
-PDF parsing powered by [PDF.js](https://mozilla.github.io/pdf.js/) (Mozilla). Chemistry data from [PubChem](https://pubchem.ncbi.nlm.nih.gov/) (NIH NLM). Icons from [lucide](https://lucide.dev/). Design language inspired by [Valdera](https://www.valdera.com)'s buyer interface.
-
-## License
-
-MIT — do whatever you want with the code, just don't sue me if it breaks.
+See `README-DEPLOY.md` for a step-by-step Vercel deployment guide aimed at non-developers.

@@ -87,7 +87,7 @@ That's it. The site is live and anyone with the link can use it.
 Open the live URL and click through each of these to make sure nothing is broken:
 
 **Dashboard tab** (the home screen)
-- You should see the supplier name "Hexakron Specialty Chemicals" with a lime "Tier 1" pill
+- You should see the supplier name "BASF SE" with a lime "Tier 1" pill
 - Five stats: benchmarking bars, AI insights, commercial activity table, completeness score, etc.
 - All text should be white/grey on a dark grey background
 - No glowing or neon effects
@@ -116,7 +116,7 @@ Open the live URL and click through each of these to make sure nothing is broken
 
 **Benchmarking tab**
 - Headline cards (composite score, peer percentile, lead time, certs)
-- Five horizontal bars comparing Hexakron to peer median
+- Four horizontal bars comparing BASF on pricing, Verbund integration, compliance, and R&D intensity
 - Strengths / Weaknesses panels
 - Peer suppliers table at the bottom
 
